@@ -1,0 +1,2 @@
+CheckmarxPythonSDK==0.6.0
+PyInstaller==5.6.2
