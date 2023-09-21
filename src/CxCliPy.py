@@ -3,8 +3,6 @@ This a CLI script. It can be converted to binary file by using pyinstaller
 
 pyinstaller -y -F --clean CxCliPy.py
 
-can --cxsast_base_url http://desktop-rmvpboc:52500/ --cxsast_username Admin --cxsast_password Password01! --preset All --incremental False --location_type Folder --location_path /home/happy/Downloads/tut-spring-boot-kotlin-main --project_name /CxServer/tut-spring-boot-kotlin --exclude_folders "test,integrationtest" --exclude_files "*min.js" --report_csv cx-report.csv --full_scan_cycle 10
-
 Sample usage
 /home/happy/Documents/CxCliPy/dist/CxCliPy scan --cxsast_base_url http://192.168.3.84 --cxsast_username Admin \
 --cxsast_password *** --preset All --incremental False --location_type Folder \
