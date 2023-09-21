@@ -3,6 +3,8 @@ This a CLI script. It can be converted to binary file by using pyinstaller
 
 pyinstaller -y -F --clean CxCliPy.py
 
+can --cxsast_base_url http://desktop-rmvpboc:52500/ --cxsast_username Admin --cxsast_password Password01! --preset All --incremental False --location_type Folder --location_path /home/happy/Downloads/tut-spring-boot-kotlin-main --project_name /CxServer/tut-spring-boot-kotlin --exclude_folders "test,integrationtest" --exclude_files "*min.js" --report_csv cx-report.csv --full_scan_cycle 10
+
 Sample usage
 /home/happy/Documents/CxCliPy/dist/CxCliPy scan --cxsast_base_url http://192.168.3.84 --cxsast_username Admin \
 --cxsast_password *** --preset All --incremental False --location_type Folder \
@@ -232,13 +234,8 @@ def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_n
         project_id = project.id
         logger.info(f"new project with project_id: {project_id}")
 
-    logger.info("upload source code zip file")
-    projects_api.upload_source_code_zip_file(project_id, str(zip_file_path))
-
-    logger.info("define SAST scan settings, set preset")
     preset_id = projects_api.get_preset_id_by_name(preset_name=preset_name)
     logger.info("preset id: {}".format(preset_id))
-    scan_api.define_sast_scan_settings(project_id=project_id, preset_id=preset_id)
 
     logger.info("set exclude folders and exclude files")
     projects_api.set_project_exclude_settings_by_project_id(
@@ -253,7 +250,9 @@ def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_n
 
     logger.info("create new scan")
     logger.info(f"The scan type will be: {'incremental' if incremental else 'full'} ")
-    scan = scan_api.create_new_scan(project_id=project_id, is_incremental=incremental)
+    scan = scan_api.create_new_scan_with_settings(project_id=project_id, comment="", preset_id=preset_id,
+                                                  zipped_source_file_path=str(zip_file_path),
+                                                  is_incremental=incremental)
     scan_id = scan.id
     logger.info("scan_id : {}".format(scan_id))
 
