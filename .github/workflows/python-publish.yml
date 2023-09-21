@@ -15,8 +15,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Package Application
-      uses: JackMcKew/pyinstaller-action-linux@main
+    - name: PyInstaller Linux
+      uses: JackMcKew/pyinstaller-action-linux@python3.10
       with:
         path: src
     - name: Release
