@@ -268,10 +268,10 @@ def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_n
     logger.info("get statistics results by scan id")
     statistics = scan_api.get_statistics_results_by_scan_id(scan_id=scan_id)
     statistics_updated = {
-        "Critical": statistics.high_severity,
-        "High": statistics.medium_severity,
-        "Medium": statistics.low_severity,
-        "Low": statistics.info_severity
+        "High": statistics.high_severity,
+        "Medium": statistics.medium_severity,
+        "Low": statistics.low_severity,
+        "Info": statistics.info_severity
     }
     logger.info(f"statistics: {statistics_updated}")
     return scan_id
