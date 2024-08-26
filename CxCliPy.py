@@ -13,7 +13,7 @@ Sample usage
 
 
 
-scan --cxone_access_control_url https://eu.iam.checkmarx.net --cxone_server https://eu.ast.checkmarx.net --cxone_tenant_name asean_2021_08 --cxone_grant_type refresh_token --cxone_refresh_token "eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI4ZjgxMDRhMS1hZTIzLTQ1OWMtODJmZi0zNDNiMjIzZTIyN2MifQ.eyJpYXQiOjE3MTM0MTkyMzUsImp0aSI6ImQ5ZmMxMzA5LWQ3NTUtNGZmMi1hYzZmLWNhNDBhNTg1NWFjYyIsImlzcyI6Imh0dHBzOi8vZXUuaWFtLmNoZWNrbWFyeC5uZXQvYXV0aC9yZWFsbXMvYXNlYW5fMjAyMV8wOCIsImF1ZCI6Imh0dHBzOi8vZXUuaWFtLmNoZWNrbWFyeC5uZXQvYXV0aC9yZWFsbXMvYXNlYW5fMjAyMV8wOCIsInN1YiI6IjUyMjU2OGNkLWZmYzUtNDFhZC1hZmYwLTg3NGVlY2MwMGE2YyIsInR5cCI6Ik9mZmxpbmUiLCJhenAiOiJhc3QtYXBwIiwic2Vzc2lvbl9zdGF0ZSI6ImU5NGZlYTNmLTdiMzAtNGZlNC05OTlmLTZkY2NiMjZkNWJiMCIsInNjb3BlIjoiIG9mZmxpbmVfYWNjZXNzIiwic2lkIjoiZTk0ZmVhM2YtN2IzMC00ZmU0LTk5OWYtNmRjY2IyNmQ1YmIwIn0.5SiX1jMY8967D95-83oz8MxSIV7DbYgiJEdgJjepKTk" --preset "ASA Premium"  --incremental false --location_path /home/happy/Documents/SourceCode/github/java/JavaVulnerableLab --project_name happy-test-2022-04-20 --main_branch master --branch master --exclude_folders "test,integrationtest" --exclude_files "*min.js" --report_csv cx-report.csv --full_scan_cycle 10
+scan --cxone_access_control_url https://eu.iam.checkmarx.net --cxone_server https://eu.ast.checkmarx.net --cxone_tenant_name asean_2021_08 --cxone_grant_type refresh_token --cxone_refresh_token "eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI4ZjgxMDRhMS1hZTIzLTQ1OWMtODJmZi0zNDNiMjIzZTIyN2MifQ.eyJpYXQiOjE3MTM0MTkyMzUsImp0aSI6ImQ5ZmMxMzA5LWQ3NTUtNGZmMi1hYzZmLWNhNDBhNTg1NWFjYyIsImlzcyI6Imh0dHBzOi8vZXUuaWFtLmNoZWNrbWFyeC5uZXQvYXV0aC9yZWFsbXMvYXNlYW5fMjAyMV8wOCIsImF1ZCI6Imh0dHBzOi8vZXUuaWFtLmNoZWNrbWFyeC5uZXQvYXV0aC9yZWFsbXMvYXNlYW5fMjAyMV8wOCIsInN1YiI6IjUyMjU2OGNkLWZmYzUtNDFhZC1hZmYwLTg3NGVlY2MwMGE2YyIsInR5cCI6Ik9mZmxpbmUiLCJhenAiOiJhc3QtYXBwIiwic2Vzc2lvbl9zdGF0ZSI6ImU5NGZlYTNmLTdiMzAtNGZlNC05OTlmLTZkY2NiMjZkNWJiMCIsInNjb3BlIjoiIG9mZmxpbmVfYWNjZXNzIiwic2lkIjoiZTk0ZmVhM2YtN2IzMC00ZmU0LTk5OWYtNmRjY2IyNmQ1YmIwIn0.5SiX1jMY8967D95-83oz8MxSIV7DbYgiJEdgJjepKTk" --preset "ASA Premium"  --incremental false --location_path /home/happy/Documents/SourceCode/github/java/JavaVulnerableLab --project_name happy-test-2022-04-20 --branch master --exclude_folders "test,integrationtest" --exclude_files "*min.js" --report_csv cx-report.csv --full_scan_cycle 10 --cxone_proxy http://127.0.0.1:1081
 
 """
 import pathlib
@@ -71,7 +71,6 @@ def get_command_line_arguments():
     parser.add_argument('--incremental', default=False, help="Set it True for incremental scan")
     parser.add_argument('--location_path', required=True, help="Source code folder absolute path")
     parser.add_argument('--project_name', required=True, help="Checkmarx project name")
-    parser.add_argument('--main_branch', required=True, help="git repo main branch")
     parser.add_argument('--branch', required=True, help="git repo branch to scan")
     parser.add_argument('--exclude_folders', help="exclude folders")
     parser.add_argument('--exclude_files', help='exclude files')
@@ -79,6 +78,7 @@ def get_command_line_arguments():
     parser.add_argument('--full_scan_cycle', default=10,
                         help="Defines the number of incremental scans to be performed, before performing a periodic "
                              "full scan")
+    parser.add_argument('--cxone_proxy', help="proxy URL")
     return parser.parse_known_args()
 
 
@@ -196,20 +196,19 @@ def create_zip_file_from_location_path(location_path_str: str, project_name: str
     return file_path
 
 
-def cx_scan_from_local_zip_file(preset_name: str, project_name: str, main_branch: str,
-                                branch: str, zip_file_path: str,
-                                exclude_folders: str, exclude_files: str, incremental: bool = False,
+def cx_scan_from_local_zip_file(preset_name: str,
+                                project_name: str,
+                                branch: str,
+                                zip_file_path: str,
+                                incremental: bool = False,
                                 full_scan_cycle=10):
     """
 
     Args:
         preset_name (str):
         project_name (str):
-        main_branch (str):
         branch (str):
         zip_file_path (str):
-        exclude_folders (str):
-        exclude_files (str):
         incremental (bool):
         full_scan_cycle (int):
 
@@ -223,7 +222,7 @@ def cx_scan_from_local_zip_file(preset_name: str, project_name: str, main_branch
         upload_zip_content_for_scanning,
         create_scan,
         get_a_list_of_scans,
-        get_scan_by_id,
+        get_a_scan_by_id,
         get_summary_for_many_scans,
     )
     from CheckmarxPythonSDK.CxOne.dto import (
@@ -238,12 +237,6 @@ def cx_scan_from_local_zip_file(preset_name: str, project_name: str, main_branch
         logger.error("[ERROR]: zip file not found. Abort scan.")
         exit(1)
 
-    # logger.info("get team id")
-    # team_id = team_api.get_team_id_by_team_full_name(team_full_name)
-    # if not team_id:
-    #     logger.error(f"[ERROR]: team full name {team_full_name} not exist. Abort scan.")
-    #     exit(1)
-
     projects = get_a_list_of_projects(name=project_name)
 
     if not projects:
@@ -251,22 +244,12 @@ def cx_scan_from_local_zip_file(preset_name: str, project_name: str, main_branch
         project = create_a_project(
             project_input=ProjectInput(
                 name=project_name,
-                main_branch=main_branch,
             )
         )
         project_id = project.id
         logger.info(f"new project name {project_name} with project_id: {project_id}")
     else:
         project_id = projects.projects[0].id
-
-    # preset_id = projects_api.get_preset_id_by_name(preset_name=preset_name)
-    # logger.info("preset id: {}".format(preset_id))
-    #
-    # logger.info("set exclude folders and exclude files")
-    # projects_api.set_project_exclude_settings_by_project_id(
-    #     project_id, exclude_folders_pattern=exclude_folders, exclude_files_pattern=exclude_files
-    # )
-
     scans_from_this_project_and_branch = get_a_list_of_scans(project_id=project_id, branch=branch)
     number_of_scans = scans_from_this_project_and_branch.filteredTotalCount
     remainder = number_of_scans % full_scan_cycle
@@ -297,16 +280,11 @@ def cx_scan_from_local_zip_file(preset_name: str, project_name: str, main_branch
     )
     scan = create_scan(scan_input=scan_input)
     scan_id = scan.id
-
-    # scan = scan_api.create_new_scan_with_settings(project_id=project_id, comment="", preset_id=preset_id,
-    #                                               zipped_source_file_path=str(zip_file_path),
-    #                                               is_incremental=incremental)
-    # scan_id = scan.id
     logger.info("scan_id : {}".format(scan_id))
 
     logger.info("get scan details by scan id, report scan status")
     while True:
-        scan = get_scan_by_id(scan_id=scan_id)
+        scan = get_a_scan_by_id(scan_id=scan_id)
         scan_status = scan.status
         logger.info("scan_status: {}".format(scan_status))
         if scan_status == "Completed":
@@ -400,76 +378,6 @@ def generate_report(scan_id: str, report_file_path: str):
         writer.writeheader()
         for result in report_content:
             writer.writerow(result)
-    # logger.info("register scan report")
-    # report = scan_api.register_scan_report(scan_id=scan_id, report_type=report_type)
-    # report_id = report.report_id
-    # logger.info("report_id : {}".format(report_id))
-    #
-    # logger.info("get report status by id")
-    # while not scan_api.is_report_generation_finished(report_id):
-    #     logger.info("report generating")
-    #     time.sleep(10)
-    #
-    # logger.info("get report by id")
-    # report_content = scan_api.get_report_by_id(report_id)
-
-    # logger.info("write original report")
-    # with open(str(report_file_path), "wb") as f_out:
-    #     f_out.write(report_content)
-    #
-    # if report_type.lower() == "csv":
-    #     update_csv_report(cx_report_file_path=report_file_path, scan_id=scan_id)
-
-
-# def get_similarity_ids_of_a_scan(scan_id):
-#     from CheckmarxPythonSDK.CxODataApiSDK.HttpRequests import get_request
-#     url = f"/Cxwebinterface/odata/v1/Scans({scan_id})/Results?$select=SimilarityId,PathId"
-#     return get_request(relative_url=url)
-
-
-# def update_csv_report(cx_report_file_path, scan_id):
-#     """
-#     update CSV report by add the similarityID column (data retrieved by using ODATA API)
-#     Args:
-#         cx_report_file_path:
-#         scan_id:
-#
-#     Returns:
-#
-#     """
-#     logger.info("update csv report")
-#     if not pathlib.Path(cx_report_file_path).exists():
-#         logger.info(f"report does not exist, file path: {cx_report_file_path}")
-#         return
-#     import csv
-#     from collections import OrderedDict
-#     logger.info("get similarity id by using ODATA API")
-#     similarity_id_path_ids = get_similarity_ids_of_a_scan(scan_id=scan_id)
-#     sim_path_dict = {}
-#     for pair in similarity_id_path_ids:
-#         sim_path_dict[pair.get("PathId")] = pair.get("SimilarityId")
-#
-#     logger.info("read csv file")
-#     csv_content = []
-#     with open(cx_report_file_path, newline='', encoding="utf-8-sig") as csvfile:
-#         reader = csv.DictReader(csvfile)
-#         field_names = reader.fieldnames
-#         field_names = [item for item in field_names]
-#         field_names.append('SimilarityID')
-#         for row in reader:
-#             path_id = row.get("Link").split('&')[2].split('=')[1]
-#             path_id = int(path_id)
-#             similarity_id = sim_path_dict.get(path_id)
-#             new_ordered_dict = OrderedDict()
-#             for key, value in row.items():
-#                 new_ordered_dict[key] = value
-#             new_ordered_dict['SimilarityID'] = similarity_id
-#             csv_content.append(new_ordered_dict)
-#     logger.info("write csv file")
-#     with open(cx_report_file_path, 'w', newline='') as csvfile:
-#         writer = csv.DictWriter(csvfile, fieldnames=field_names, dialect='unix')
-#         writer.writeheader()
-#         writer.writerows(csv_content)
 
 
 def run_scan_and_generate_reports(arguments):
@@ -477,11 +385,11 @@ def run_scan_and_generate_reports(arguments):
     cxone_server = arguments.cxone_server
     cxone_tenant_name = arguments.cxone_tenant_name
     cxone_grant_type = arguments.cxone_grant_type
+    cxone_proxy = arguments.cxone_proxy
     preset = arguments.preset
     incremental = False if arguments.incremental.lower() == "false" else True
     location_path = arguments.location_path
     project_name = arguments.project_name
-    main_branch = arguments.main_branch
     branch = arguments.branch
     exclude_folders = arguments.exclude_folders
     exclude_files = arguments.exclude_files
@@ -492,11 +400,11 @@ def run_scan_and_generate_reports(arguments):
         f"cxone_server: {cxone_server}\n"
         f"cxone_tenant_name: {cxone_tenant_name}\n"
         f"cxone_grant_type: {cxone_grant_type}\n"
+        f"cxone_proxy: {cxone_proxy}\n"
         f"preset: {preset}\n"
         f"incremental: {incremental}\n"
         f"location_path: {location_path}\n"
         f"project_name: {project_name}\n"
-        f"main_branch: {main_branch}\n"
         f"branch: {branch}\n"
         f"exclude_folders: {exclude_folders}\n"
         f"exclude_files: {exclude_files}\n"
@@ -505,16 +413,12 @@ def run_scan_and_generate_reports(arguments):
     )
 
     logger.info(f"creating zip file by zip the source code folder: {location_path}")
-    # project_path_list = project_full_path.split("/")
-    # project_name = project_path_list[-1]
-    # team_full_name = "/".join(project_path_list[0: len(project_path_list)-1])
     zip_file_path = create_zip_file_from_location_path(location_path, project_name, exclude_folders_str=exclude_folders,
                                                        exclude_files_str=exclude_files)
     logger.info(f"ZIP file created: {zip_file_path}")
-    scan_id = cx_scan_from_local_zip_file(preset_name=preset,  project_name=project_name, main_branch="master",
+    scan_id = cx_scan_from_local_zip_file(preset_name=preset,  project_name=project_name,
                                           branch="master",
-                                          zip_file_path=zip_file_path, exclude_folders=exclude_folders,
-                                          exclude_files=exclude_files, incremental=incremental,
+                                          zip_file_path=zip_file_path, incremental=incremental,
                                           full_scan_cycle=full_scan_cycle)
 
     if scan_id is None:
