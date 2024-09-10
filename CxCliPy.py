@@ -237,9 +237,9 @@ def cx_scan_from_local_zip_file(preset_name: str,
         logger.error("[ERROR]: zip file not found. Abort scan.")
         exit(1)
 
-    projects = get_a_list_of_projects(name=project_name)
+    project_collection = get_a_list_of_projects(name=project_name)
 
-    if not projects:
+    if not project_collection.projects:
         logger.info("project does not exist. create project")
         project = create_a_project(
             project_input=ProjectInput(
@@ -249,7 +249,7 @@ def cx_scan_from_local_zip_file(preset_name: str,
         project_id = project.id
         logger.info(f"new project name {project_name} with project_id: {project_id}")
     else:
-        project_id = projects.projects[0].id
+        project_id = project_collection.projects[0].id
     scans_from_this_project_and_branch = get_a_list_of_scans(project_id=project_id, branch=branch)
     number_of_scans = scans_from_this_project_and_branch.filteredTotalCount
     remainder = number_of_scans % full_scan_cycle
