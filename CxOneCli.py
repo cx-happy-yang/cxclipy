@@ -1,7 +1,7 @@
 """
 This a CLI script. It can be converted to binary file by using pyinstaller
 
-pyinstaller -y -F --clean CxCliPy.py
+pyinstaller -y -F --clean CxOneCli.py
 
 Sample usage
 /home/happy/Documents/CxCliPy/dist/CxCliPy scan --cxsast_base_url http://192.168.3.84 --cxsast_username Admin \
@@ -13,7 +13,7 @@ Sample usage
 
 
 
-scan --cxone_access_control_url https://eu.iam.checkmarx.net --cxone_server https://eu.ast.checkmarx.net --cxone_tenant_name asean_2021_08 --cxone_grant_type refresh_token --cxone_refresh_token "eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI4ZjgxMDRhMS1hZTIzLTQ1OWMtODJmZi0zNDNiMjIzZTIyN2MifQ.eyJpYXQiOjE3MTM0MTkyMzUsImp0aSI6ImQ5ZmMxMzA5LWQ3NTUtNGZmMi1hYzZmLWNhNDBhNTg1NWFjYyIsImlzcyI6Imh0dHBzOi8vZXUuaWFtLmNoZWNrbWFyeC5uZXQvYXV0aC9yZWFsbXMvYXNlYW5fMjAyMV8wOCIsImF1ZCI6Imh0dHBzOi8vZXUuaWFtLmNoZWNrbWFyeC5uZXQvYXV0aC9yZWFsbXMvYXNlYW5fMjAyMV8wOCIsInN1YiI6IjUyMjU2OGNkLWZmYzUtNDFhZC1hZmYwLTg3NGVlY2MwMGE2YyIsInR5cCI6Ik9mZmxpbmUiLCJhenAiOiJhc3QtYXBwIiwic2Vzc2lvbl9zdGF0ZSI6ImU5NGZlYTNmLTdiMzAtNGZlNC05OTlmLTZkY2NiMjZkNWJiMCIsInNjb3BlIjoiIG9mZmxpbmVfYWNjZXNzIiwic2lkIjoiZTk0ZmVhM2YtN2IzMC00ZmU0LTk5OWYtNmRjY2IyNmQ1YmIwIn0.5SiX1jMY8967D95-83oz8MxSIV7DbYgiJEdgJjepKTk" --preset "ASA Premium"  --incremental false --location_path /home/happy/Documents/SourceCode/github/java/JavaVulnerableLab --project_name happy-test-2022-04-20 --branch master --exclude_folders "test,integrationtest" --exclude_files "*min.js" --report_csv cx-report.csv --full_scan_cycle 10 --cxone_proxy http://127.0.0.1:1081
+scan --cxone_access_control_url https://eu.iam.checkmarx.net --cxone_server https://eu.ast.checkmarx.net --cxone_tenant_name asean_2021_08 --cxone_grant_type refresh_token --cxone_refresh_token "****" --preset "ASA Premium"  --incremental false --location_path /home/happy/Documents/SourceCode/github/java/JavaVulnerableLab --project_name happy-test-2022-04-20 --branch master --exclude_folders "test,integrationtest" --exclude_files "*min.js" --report_csv cx-report.csv --full_scan_cycle 10 --cxone_proxy http://127.0.0.1:1081
 
 """
 import pathlib
