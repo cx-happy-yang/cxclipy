@@ -24,6 +24,10 @@ from zipfile import ZipFile, ZIP_DEFLATED
 import logging
 import csv
 
+from CheckmarxPythonSDK.CxOne.AccessControlAPI import (
+    get_group_by_name
+)
+
 # create logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -72,6 +76,8 @@ def get_command_line_arguments():
     parser.add_argument('--location_path', required=True, help="Source code folder absolute path")
     parser.add_argument('--project_name', required=True, help="Checkmarx project name")
     parser.add_argument('--branch', required=True, help="git repo branch to scan")
+    parser.add_argument('--scanners', default="sast,sca,kics,apisec,containers",
+                        help="scanners: sast,sca,kics,apisec,containers")
     parser.add_argument('--exclude_folders', help="exclude folders")
     parser.add_argument('--exclude_files', help='exclude files')
     parser.add_argument('--report_csv', default=None, help="csv report file path")
@@ -201,7 +207,9 @@ def cx_scan_from_local_zip_file(preset_name: str,
                                 branch: str,
                                 zip_file_path: str,
                                 incremental: bool = False,
-                                full_scan_cycle=10):
+                                full_scan_cycle=10,
+                                group_ids=None,
+                                scanners=None):
     """
 
     Args:
@@ -211,6 +219,8 @@ def cx_scan_from_local_zip_file(preset_name: str,
         zip_file_path (str):
         incremental (bool):
         full_scan_cycle (int):
+        group_ids (list of str):
+        scanners (list of str):
 
     Returns:
         return scan id if scan finished, otherwise return None
@@ -244,6 +254,7 @@ def cx_scan_from_local_zip_file(preset_name: str,
         project = create_a_project(
             project_input=ProjectInput(
                 name=project_name,
+                groups=group_ids
             )
         )
         project_id = project.id
@@ -256,7 +267,7 @@ def cx_scan_from_local_zip_file(preset_name: str,
     if remainder == 0:
         incremental = False
     logger.info("create new scan")
-    logger.info(f"The scan type will be: {'incremental' if incremental else 'full'} ")
+    logger.info(f"The sast scan type will be: {'incremental' if incremental else 'full'} ")
     url = create_a_pre_signed_url_to_upload_files()
     upload_source_code_successful = upload_zip_content_for_scanning(
         upload_link=url,
@@ -266,17 +277,24 @@ def cx_scan_from_local_zip_file(preset_name: str,
         logger.error("[ERROR]: Failed to upload zip file. Abort scan.")
         exit(1)
 
+    scan_configs = []
+    for scanner in scanners:
+        if scanner == "sast":
+            scan_configs.append(
+                ScanConfig("sast",
+                           {
+                               "incremental": "true" if incremental else "false",
+                               "presetName": preset_name
+                           }
+                           )
+            )
+        else:
+            scan_configs.append(ScanConfig(scanner))
     scan_input = ScanInput(
         scan_type="upload",
         handler=Upload(upload_url=url, branch=branch),
         project=Project(project_id=project_id),
-        configs=[
-            ScanConfig("sast", {
-                "incremental": "true" if incremental else "false",
-                "presetName": preset_name}
-            ),
-            ScanConfig("sca"),
-        ]
+        configs=scan_configs,
     )
     scan = create_scan(scan_input=scan_input)
     scan_id = scan.id
@@ -389,12 +407,19 @@ def run_scan_and_generate_reports(arguments):
     preset = arguments.preset
     incremental = False if arguments.incremental.lower() == "false" else True
     location_path = arguments.location_path
-    project_name = arguments.project_name
     branch = arguments.branch
     exclude_folders = arguments.exclude_folders
     exclude_files = arguments.exclude_files
     report_csv = arguments.report_csv
     full_scan_cycle = int(arguments.full_scan_cycle)
+    scanners = [scanner for scanner in arguments.scanners.split(",")]
+
+    project_path_list = arguments.project_name.split("/")
+    project_name = project_path_list[-1]
+    group_full_name = "/".join(project_path_list[0: len(project_path_list) - 1])
+    group = get_group_by_name(realm=cxone_tenant_name, group_name=group_full_name)
+    group_id = group.id
+    group_ids = [group_id]
     logger.info(
         f"cxone_access_control_url: {cxone_access_control_url}\n"
         f"cxone_server: {cxone_server}\n"
@@ -410,16 +435,19 @@ def run_scan_and_generate_reports(arguments):
         f"exclude_files: {exclude_files}\n"
         f"report_csv: {report_csv}\n"
         f"full_scan_cycle: {full_scan_cycle}\n"
+        f"group_full_name: {group_full_name}\n"
+        f"scanners: {scanners}\n"
     )
 
     logger.info(f"creating zip file by zip the source code folder: {location_path}")
     zip_file_path = create_zip_file_from_location_path(location_path, project_name, exclude_folders_str=exclude_folders,
                                                        exclude_files_str=exclude_files)
     logger.info(f"ZIP file created: {zip_file_path}")
-    scan_id = cx_scan_from_local_zip_file(preset_name=preset,  project_name=project_name,
+    scan_id = cx_scan_from_local_zip_file(preset_name=preset, project_name=project_name,
                                           branch="master",
                                           zip_file_path=zip_file_path, incremental=incremental,
-                                          full_scan_cycle=full_scan_cycle)
+                                          full_scan_cycle=full_scan_cycle, group_ids=group_ids,
+                                          scanners=scanners)
 
     if scan_id is None:
         logger.info("Scan did not finish successfully, exit!")
