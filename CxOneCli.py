@@ -27,6 +27,10 @@ import csv
 from CheckmarxPythonSDK.CxOne.AccessControlAPI import (
     get_group_by_name
 )
+from CheckmarxPythonSDK.CxOne.KeycloakAPI import (
+    create_group,
+    create_subgroup,
+)
 
 # create logger
 logger = logging.getLogger(__name__)
@@ -260,9 +264,10 @@ def cx_scan_from_local_zip_file(preset_name: str,
             )
         )
         project_id = project.id
-        logger.info(f"new project name {project_name} with project_id: {project_id}")
+        logger.info(f"new project name {project_name} with project_id: {project_id} created.")
     else:
         project_id = project_collection.projects[0].id
+    logger.info(f"project id: {project_id}")
     scans_from_this_project_and_branch = get_a_list_of_scans(project_id=project_id, branch=branch)
     number_of_scans = scans_from_this_project_and_branch.filteredTotalCount
     remainder = number_of_scans % full_scan_cycle
@@ -307,9 +312,9 @@ def cx_scan_from_local_zip_file(preset_name: str,
         scan = get_a_scan_by_id(scan_id=scan_id)
         scan_status = scan.status
         logger.info("scan_status: {}".format(scan_status))
-        if scan_status == "Completed":
+        if scan_status in ["Completed", "Partial"]:
             break
-        elif scan_status in ["Failed", "Partial", "Canceled"]:
+        elif scan_status in ["Failed", "Canceled"]:
             return None
         time.sleep(10)
 
@@ -335,6 +340,7 @@ def generate_report(scan_id: str, report_file_path: str):
     Returns:
 
     """
+    logger.info("start report generation")
     from CheckmarxPythonSDK.CxOne import get_sast_results_by_scan_id
     offset = 0
     limit = 500
@@ -387,7 +393,6 @@ def generate_report(scan_id: str, report_file_path: str):
             "SimilarityID": result.similarity_id
         } for result in sast_results
     ]
-
     with open(report_file_path, 'w', newline='') as csvfile:
         fieldnames = ["QueryID", "QueryIDStr", "LanguageName", "QueryGroup", "CweID", "ConfidenceLevel", "Compliances",
                       "FirstScanID", "FirstFoundAt", "Status",
@@ -398,6 +403,7 @@ def generate_report(scan_id: str, report_file_path: str):
         writer.writeheader()
         for result in report_content:
             writer.writerow(result)
+    logger.info("report generated successfully")
 
 
 def run_scan_and_generate_reports(arguments):
@@ -419,9 +425,7 @@ def run_scan_and_generate_reports(arguments):
     project_path_list = arguments.project_name.split("/")
     project_name = project_path_list[-1]
     group_full_name = "/".join(project_path_list[0: len(project_path_list) - 1])
-    group = get_group_by_name(realm=cxone_tenant_name, group_name=group_full_name)
-    group_id = group.id
-    group_ids = [group_id]
+
     logger.info(
         f"cxone_access_control_url: {cxone_access_control_url}\n"
         f"cxone_server: {cxone_server}\n"
@@ -441,6 +445,33 @@ def run_scan_and_generate_reports(arguments):
         f"scanners: {scanners}\n"
     )
 
+    group_names = [item for item in group_full_name.split("/")]
+    group = get_group_by_name(realm=cxone_tenant_name, group_name=group_full_name)
+    if not group:
+        for index, gr in enumerate(group_names):
+            if index == 0:
+                group = get_group_by_name(realm=cxone_tenant_name, group_name=gr)
+                if not group:
+                    logger.info(f"root group {gr} not exist.")
+                    logger.info(f"start creating root group: {gr}")
+                    create_group(realm=cxone_tenant_name, group_name=gr)
+                    logger.info(f"finish creating root group: {gr}")
+            else:
+                parent_group_path = "/".join(group_names[0: index])
+                logger.info(f"parent group path: {parent_group_path}")
+                group_path = "/".join(group_names[0: index + 1])
+                logger.info(f"current group path: {group_path}")
+                group = get_group_by_name(realm=cxone_tenant_name, group_name=group_path)
+                if not group:
+                    logger.info(f"current group {group_path} not exist.")
+                    logger.info(f"start creating sub group: {group_path}, parent group name: {parent_group_path}")
+                    parent_group = get_group_by_name(realm=cxone_tenant_name, group_name=parent_group_path)
+                    create_subgroup(realm=cxone_tenant_name, group_id=parent_group.id, subgroup_name=gr)
+                    logger.info(f"finish creating sub group: {group_path}, parent group name: {parent_group_path}")
+    group = get_group_by_name(realm=cxone_tenant_name, group_name=group_full_name)
+    group_id = group.id
+    group_ids = [group_id]
+
     logger.info(f"creating zip file by zip the source code folder: {location_path}")
     zip_file_path = create_zip_file_from_location_path(location_path, project_name, exclude_folders_str=exclude_folders,
                                                        exclude_files_str=exclude_files)
@@ -459,7 +490,7 @@ def run_scan_and_generate_reports(arguments):
     pathlib.Path(zip_file_path).unlink()
 
     generate_report(scan_id=scan_id, report_file_path=report_csv)
-    logger.info("report generated successfully")
+
 
 
 if __name__ == '__main__':
