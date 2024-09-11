@@ -47,12 +47,13 @@ def get_cx_supported_file_extensions():
         '.jsf', '.json', '.jsp', '.jspf', '.lock', '.m', '.master', '.-meta.xml', '.mf', '.object', '.page', '.pc',
         '.pck', '.php', '.php3', '.php4', '.php5', '.phtm', '.phtml', '.pkb', '.pkh', '.pks', '.pl', '.plist', '.pls',
         '.plx', '.pm', '.prc', '.project', '.properties', '.psgi', '.py', '.rb', '.report', '.rhtml', '.rjs', '.rxml',
-        '.scala', '.should_neve_match_anything_9gdfg4', '.sln', '.spc', '.sqb', '.sqf', '.sqh', '.sql', '.sqp', '.sqt',
+        '.scala', '.sln', '.spc', '.sqb', '.sqf', '.sqh', '.sql', '.sqp', '.sqt',
         '.sqtb', '.sqth', '.sqv', '.swift', '.tag', '.tgr', '.tld', '.tpb', '.tpl', '.tps', '.trg', '.trigger', '.ts',
         '.tsx', '.twig', '.vb', '.vbp', '.vbs', '.wod', '.workflow', '.xaml', '.xhtml', '.xib', '.xml', '.xsaccess',
         '.xsapp', '.xsjs', '.xsjslib', '-meta.xml', '.rpgle', '.pug', '.vue', '.mustache', '.cbl', '.jsx', '.apxc',
         '.cpy', '.kt', '.rpg38', '.pro', '.csv', '.ftl', '.evt', '.sqlrpg', '.eco', '.cmp', '.txt', '.pco', '.ac',
-        '.cob', '.rpg', '.cmake', '.sqlrpgle', '.tex', '.vm', '.kts', '.latex', '.am', '.app'
+        '.cob', '.rpg', '.cmake', '.sqlrpgle', '.tex', '.vm', '.kts', '.latex', '.am', '.app', ".yml", ".yaml", ".rs",
+        ".dart", ".dspf", ".vbproj", ".toml", ".cfg", ".sbt", ".private", ".resolved", ".mod", ".sum", ".snapshot"
     ]
 
 
@@ -193,10 +194,11 @@ def create_zip_file_from_location_path(location_path_str: str, project_name: str
                 continue
             for file in files:
                 file_lower_case = file.lower()
-                if not file_lower_case.endswith(tuple(extensions)):
-                    continue
-                if should_be_excluded(exclude_files, file_lower_case):
-                    continue
+                if file_lower_case not in ["dockerfile", "cartfile", "podfile", "gemfile", "cpanfile"]:
+                    if not file_lower_case.endswith(tuple(extensions)):
+                        continue
+                    if should_be_excluded(exclude_files, file_lower_case):
+                        continue
                 fn = os.path.join(base, file)
                 zip_file.write(fn, fn[root_len:])
     return file_path
