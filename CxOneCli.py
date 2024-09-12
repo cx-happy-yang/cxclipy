@@ -275,7 +275,10 @@ def cx_scan_from_local_zip_file(preset_name: str,
         incremental = False
     logger.info("create new scan")
     logger.info(f"The sast scan type will be: {'incremental' if incremental else 'full'} ")
+    logger.info("create a pre signed url to upload zip file")
     url = create_a_pre_signed_url_to_upload_files()
+    logger.info(f"upload url created: {url}")
+    logger.info("begin to upload zip file")
     upload_source_code_successful = upload_zip_content_for_scanning(
         upload_link=url,
         zip_file_path=zip_file_path,
@@ -283,7 +286,7 @@ def cx_scan_from_local_zip_file(preset_name: str,
     if not upload_source_code_successful:
         logger.error("[ERROR]: Failed to upload zip file. Abort scan.")
         exit(1)
-
+    logger.info("finish upload zip file")
     scan_configs = []
     for scanner in scanners:
         if scanner == "sast":
@@ -367,8 +370,7 @@ def generate_report(cxone_server, project_id, scan_id: str, report_file_path: st
 
     report_content = []
     for result in sast_results:
-        query_str = urlencode({"resultId": result.result_id})
-        link = f"https://{cxone_server}/sast-results/{project_id}/{scan_id}?{query_str}"
+        link = f"https://{cxone_server}/results/{project_id}/{scan_id}/sast"
         report_content.append(
             {
                 "QueryID": result.query_id,
