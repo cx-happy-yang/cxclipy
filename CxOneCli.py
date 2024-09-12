@@ -23,7 +23,7 @@ from os.path import exists
 from zipfile import ZipFile, ZIP_DEFLATED
 import logging
 import csv
-
+from urllib.parse import urlencode
 from CheckmarxPythonSDK.CxOne.AccessControlAPI import (
     get_group_by_name
 )
@@ -330,13 +330,15 @@ def cx_scan_from_local_zip_file(preset_name: str,
         "Low": low_list[0].get("counter") if low_list else 0,
     }
     logger.info(f"statistics: {statistics_updated}")
-    return scan_id
+    return project_id, scan_id
 
 
-def generate_report(scan_id: str, report_file_path: str):
+def generate_report(cxone_server, project_id, scan_id: str, report_file_path: str):
     """
 
     Args:
+        cxone_server (str):
+        project_id (str):
         scan_id (str):
         report_file_path (str):
 
@@ -363,39 +365,43 @@ def generate_report(scan_id: str, report_file_path: str):
             sast_results_collection = get_sast_results_by_scan_id(scan_id=scan_id, offset=offset, limit=limit)
             sast_results.extend(sast_results_collection.get("results"))
 
-    report_content = [
-        {
-            "QueryID": result.query_id,
-            "QueryIDStr": result.query_id_str,
-            "LanguageName": result.language_name,
-            "QueryGroup": result.query_group,
-            "CweID": result.cwe_id,
-            "ConfidenceLevel": result.confidence_level,
-            "Compliances": result.compliances,
-            "FirstScanID": result.first_scan_id,
-            "FirstFoundAt": result.first_found_at,
-            "Status": result.status,
-            "Query": result.query_name,
-            "SrcFileName": result.nodes[0].fileName,
-            "Line": result.nodes[0].line,
-            "Column": result.nodes[0].column,
-            "NodeId": result.nodes[0].nodeHash,
-            "Name": result.nodes[0].fullName,
-            "DestFileName": result.nodes[-1].fileName,
-            "DestLine": result.nodes[-1].line,
-            "DestColumn": result.nodes[-1].column,
-            "DestNodeId": result.nodes[-1].nodeHash,
-            "DestName": result.nodes[-1].fullName,
-            "Result State": result.state,
-            "Result Severity": result.severity,
-            "Assigned To": "",
-            "Comment": "",
-            "Link": "",
-            "Result Status": result.status,
-            "Detection Date": result.found_at,
-            "SimilarityID": result.similarity_id
-        } for result in sast_results
-    ]
+    report_content = []
+    for result in sast_results:
+        query_str = urlencode({"resultId": result.result_id})
+        link = f"https://{cxone_server}/sast-results/{project_id}/{scan_id}?{query_str}"
+        report_content.append(
+            {
+                "QueryID": result.query_id,
+                "QueryIDStr": result.query_id_str,
+                "LanguageName": result.language_name,
+                "QueryGroup": result.query_group,
+                "CweID": result.cwe_id,
+                "ConfidenceLevel": result.confidence_level,
+                "Compliances": result.compliances,
+                "FirstScanID": result.first_scan_id,
+                "FirstFoundAt": result.first_found_at,
+                "Status": result.status,
+                "Query": result.query_name,
+                "SrcFileName": result.nodes[0].fileName,
+                "Line": result.nodes[0].line,
+                "Column": result.nodes[0].column,
+                "NodeId": result.nodes[0].nodeHash,
+                "Name": result.nodes[0].fullName,
+                "DestFileName": result.nodes[-1].fileName,
+                "DestLine": result.nodes[-1].line,
+                "DestColumn": result.nodes[-1].column,
+                "DestNodeId": result.nodes[-1].nodeHash,
+                "DestName": result.nodes[-1].fullName,
+                "Result State": result.state,
+                "Result Severity": result.severity,
+                "Assigned To": "",
+                "Comment": "",
+                "Link": link,
+                "Result Status": result.status,
+                "Detection Date": result.found_at,
+                "SimilarityID": result.similarity_id
+            }
+        )
     with open(report_file_path, 'w', newline='') as csvfile:
         fieldnames = ["QueryID", "QueryIDStr", "LanguageName", "QueryGroup", "CweID", "ConfidenceLevel", "Compliances",
                       "FirstScanID", "FirstFoundAt", "Status",
@@ -479,7 +485,7 @@ def run_scan_and_generate_reports(arguments):
     zip_file_path = create_zip_file_from_location_path(location_path, project_name, exclude_folders_str=exclude_folders,
                                                        exclude_files_str=exclude_files)
     logger.info(f"ZIP file created: {zip_file_path}")
-    scan_id = cx_scan_from_local_zip_file(preset_name=preset, project_name=project_name,
+    project_id, scan_id = cx_scan_from_local_zip_file(preset_name=preset, project_name=project_name,
                                           branch="master",
                                           zip_file_path=zip_file_path, incremental=incremental,
                                           full_scan_cycle=full_scan_cycle, group_ids=group_ids,
@@ -492,8 +498,7 @@ def run_scan_and_generate_reports(arguments):
     logger.info(f"deleting zip file: {zip_file_path}")
     pathlib.Path(zip_file_path).unlink()
 
-    generate_report(scan_id=scan_id, report_file_path=report_csv)
-
+    generate_report(cxone_server=cxone_server, project_id=project_id, scan_id=scan_id, report_file_path=report_csv)
 
 
 if __name__ == '__main__':
