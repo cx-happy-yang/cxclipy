@@ -321,10 +321,13 @@ def cx_scan_from_local_zip_file(preset_name: str,
     logger.info("get statistics results by scan id")
     statistics = get_summary_for_many_scans(scan_ids=[scan_id])
     statistics = statistics.get("scansSummaries")[0].sastCounters.get('severityStatusCounters')
+    high_list = [item for item in statistics if item.get("severity") == "HIGH"]
+    medium_list = [item for item in statistics if item.get("severity") == "MEDIUM"]
+    low_list = [item for item in statistics if item.get("severity") == "LOW"]
     statistics_updated = {
-        "High": [item for item in statistics if item.get("severity") == "HIGH"][0].get("counter"),
-        "Medium": [item for item in statistics if item.get("severity") == "MEDIUM"][0].get("counter"),
-        "Low": [item for item in statistics if item.get("severity") == "LOW"][0].get("counter")
+        "High": high_list[0].get("counter") if high_list else 0,
+        "Medium": medium_list[0].get("counter") if medium_list else 0,
+        "Low": low_list[0].get("counter") if low_list else 0,
     }
     logger.info(f"statistics: {statistics_updated}")
     return scan_id
