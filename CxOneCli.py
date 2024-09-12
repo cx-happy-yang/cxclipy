@@ -370,7 +370,7 @@ def generate_report(cxone_server, project_id, scan_id: str, report_file_path: st
 
     report_content = []
     for result in sast_results:
-        link = f"https://{cxone_server}/results/{project_id}/{scan_id}/sast"
+        link = f"{cxone_server}/results/{project_id}/{scan_id}/sast"
         report_content.append(
             {
                 "QueryID": result.query_id,
