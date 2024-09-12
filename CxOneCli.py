@@ -277,7 +277,7 @@ def cx_scan_from_local_zip_file(preset_name: str,
     logger.info(f"The sast scan type will be: {'incremental' if incremental else 'full'} ")
     logger.info("create a pre signed url to upload zip file")
     url = create_a_pre_signed_url_to_upload_files()
-    logger.info(f"upload url created: {url}")
+    logger.debug(f"upload url created: {url}")
     logger.info("begin to upload zip file")
     upload_source_code_successful = upload_zip_content_for_scanning(
         upload_link=url,
@@ -488,10 +488,10 @@ def run_scan_and_generate_reports(arguments):
                                                        exclude_files_str=exclude_files)
     logger.info(f"ZIP file created: {zip_file_path}")
     project_id, scan_id = cx_scan_from_local_zip_file(preset_name=preset, project_name=project_name,
-                                          branch="master",
-                                          zip_file_path=zip_file_path, incremental=incremental,
-                                          full_scan_cycle=full_scan_cycle, group_ids=group_ids,
-                                          scanners=scanners)
+                                                      branch=branch,
+                                                      zip_file_path=zip_file_path, incremental=incremental,
+                                                      full_scan_cycle=full_scan_cycle, group_ids=group_ids,
+                                                      scanners=scanners)
 
     if scan_id is None:
         logger.info("Scan did not finish successfully, exit!")
