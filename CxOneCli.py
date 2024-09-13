@@ -90,6 +90,8 @@ def get_command_line_arguments():
                         help="Defines the number of incremental scans to be performed, before performing a periodic "
                              "full scan")
     parser.add_argument('--cxone_proxy', help="proxy URL")
+    parser.add_argument('--scan_tag_key', help="tag key")
+    parser.add_argument('--scan_tag_value', help="tag value")
     return parser.parse_known_args()
 
 
@@ -215,7 +217,9 @@ def cx_scan_from_local_zip_file(preset_name: str,
                                 incremental: bool = False,
                                 full_scan_cycle=10,
                                 group_ids=None,
-                                scanners=None):
+                                scanners=None,
+                                scan_tag_key=None,
+                                scan_tag_value=None):
     """
 
     Args:
@@ -227,6 +231,8 @@ def cx_scan_from_local_zip_file(preset_name: str,
         full_scan_cycle (int):
         group_ids (list of str):
         scanners (list of str):
+        scan_tag_key (str):
+        scan_tag_value (str):
 
     Returns:
         return scan id if scan finished, otherwise return None
@@ -305,6 +311,7 @@ def cx_scan_from_local_zip_file(preset_name: str,
         handler=Upload(upload_url=url, branch=branch),
         project=Project(project_id=project_id),
         configs=scan_configs,
+        tags={scan_tag_key: scan_tag_value},
     )
     scan = create_scan(scan_input=scan_input)
     scan_id = scan.id
@@ -432,7 +439,8 @@ def run_scan_and_generate_reports(arguments):
     report_csv = arguments.report_csv
     full_scan_cycle = int(arguments.full_scan_cycle)
     scanners = [scanner for scanner in arguments.scanners.split(",")]
-
+    scan_tag_key = arguments.scan_tag_key
+    scan_tag_value = arguments.scan_tag_value
     project_path_list = arguments.project_name.split("/")
     project_name = project_path_list[-1]
     group_full_name = "/".join(project_path_list[0: len(project_path_list) - 1])
@@ -454,6 +462,8 @@ def run_scan_and_generate_reports(arguments):
         f"full_scan_cycle: {full_scan_cycle}\n"
         f"group_full_name: {group_full_name}\n"
         f"scanners: {scanners}\n"
+        f"scan_tag_key: {scan_tag_key}\n"
+        f"scan_tag_value: {scan_tag_value}\n"
     )
 
     group_names = [item for item in group_full_name.split("/")]
@@ -491,7 +501,8 @@ def run_scan_and_generate_reports(arguments):
                                                       branch=branch,
                                                       zip_file_path=zip_file_path, incremental=incremental,
                                                       full_scan_cycle=full_scan_cycle, group_ids=group_ids,
-                                                      scanners=scanners)
+                                                      scanners=scanners, scan_tag_key=scan_tag_key,
+                                                      scan_tag_value=scan_tag_value)
 
     if scan_id is None:
         logger.info("Scan did not finish successfully, exit!")
