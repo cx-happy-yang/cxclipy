@@ -90,8 +90,8 @@ def get_command_line_arguments():
                         help="Defines the number of incremental scans to be performed, before performing a periodic "
                              "full scan")
     parser.add_argument('--cxone_proxy', help="proxy URL")
-    parser.add_argument('--scan_tag_key', help="tag key")
-    parser.add_argument('--scan_tag_value', help="tag value")
+    parser.add_argument('--scan_tag_key', help="tag key, multiple keys can use comma separated value")
+    parser.add_argument('--scan_tag_value', help="tag value, multiple keys can use comma separated value")
     return parser.parse_known_args()
 
 
@@ -231,8 +231,8 @@ def cx_scan_from_local_zip_file(preset_name: str,
         full_scan_cycle (int):
         group_ids (list of str):
         scanners (list of str):
-        scan_tag_key (str):
-        scan_tag_value (str):
+        scan_tag_key (list of str, optional):
+        scan_tag_value (list of str, optional):
 
     Returns:
         return scan id if scan finished, otherwise return None
@@ -306,12 +306,20 @@ def cx_scan_from_local_zip_file(preset_name: str,
             )
         else:
             scan_configs.append(ScanConfig(scanner))
+    scan_tags = {}
+    if scan_tag_key:
+        for index, key in enumerate(scan_tag_key):
+            try:
+                value = scan_tag_value[index]
+            except IndexError:
+                value = None
+            scan_tags.update({key: value})
     scan_input = ScanInput(
         scan_type="upload",
         handler=Upload(upload_url=url, branch=branch),
         project=Project(project_id=project_id),
         configs=scan_configs,
-        tags={scan_tag_key: scan_tag_value},
+        tags=scan_tags,
     )
     scan = create_scan(scan_input=scan_input)
     scan_id = scan.id
@@ -439,8 +447,8 @@ def run_scan_and_generate_reports(arguments):
     report_csv = arguments.report_csv
     full_scan_cycle = int(arguments.full_scan_cycle)
     scanners = [scanner for scanner in arguments.scanners.split(",")]
-    scan_tag_key = arguments.scan_tag_key
-    scan_tag_value = arguments.scan_tag_value
+    scan_tag_key = [key for key in arguments.scan_tag_key.split(",")] if arguments.scan_tag_key else None
+    scan_tag_value = [value for value in arguments.scan_tag_value.split(",")] if arguments.scan_tag_value else None
     project_path_list = arguments.project_name.split("/")
     project_name = project_path_list[-1]
     group_full_name = "/".join(project_path_list[0: len(project_path_list) - 1])
