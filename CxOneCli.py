@@ -16,6 +16,7 @@ Sample usage
 scan --cxone_access_control_url https://eu.iam.checkmarx.net --cxone_server https://eu.ast.checkmarx.net --cxone_tenant_name asean_2021_08 --cxone_grant_type refresh_token --cxone_refresh_token "****" --preset "ASA Premium"  --incremental false --location_path /home/happy/Documents/SourceCode/github/java/JavaVulnerableLab --project_name happy-test-2022-04-20 --branch master --exclude_folders "test,integrationtest" --exclude_files "*min.js" --report_csv cx-report.csv --full_scan_cycle 10 --cxone_proxy http://127.0.0.1:1081
 
 """
+import hashlib
 import pathlib
 import time
 import os
@@ -92,6 +93,13 @@ def get_command_line_arguments():
     parser.add_argument('--cxone_proxy', help="proxy URL")
     parser.add_argument('--scan_tag_key', help="tag key, multiple keys can use comma separated value")
     parser.add_argument('--scan_tag_value', help="tag value, multiple keys can use comma separated value")
+    parser.add_argument('--parallel_scan_cancellation_mode', default="KeepNew", help="""
+     define what to do when you queue 
+     additional scans of the same project while the previous ones are still in the queue. 
+     KeepAll - process all the scans.
+     KeepOld - process the first scan you started and cancel the newer ones.
+     KeepNew - process the newest scan and cancel the previous ones.
+     """)
     return parser.parse_known_args()
 
 
@@ -218,8 +226,7 @@ def cx_scan_from_local_zip_file(preset_name: str,
                                 full_scan_cycle=10,
                                 group_ids=None,
                                 scanners=None,
-                                scan_tag_key=None,
-                                scan_tag_value=None):
+                                scan_tags=None):
     """
 
     Args:
@@ -231,8 +238,7 @@ def cx_scan_from_local_zip_file(preset_name: str,
         full_scan_cycle (int):
         group_ids (list of str):
         scanners (list of str):
-        scan_tag_key (list of str, optional):
-        scan_tag_value (list of str, optional):
+        scan_tags (dict, optional):
 
     Returns:
         return scan id if scan finished, otherwise return None
@@ -274,11 +280,17 @@ def cx_scan_from_local_zip_file(preset_name: str,
     else:
         project_id = project_collection.projects[0].id
     logger.info(f"project id: {project_id}")
-    scans_from_this_project_and_branch = get_a_list_of_scans(project_id=project_id, branch=branch)
+    scans_from_this_project_and_branch = get_a_list_of_scans(
+        offset=0, limit=1000, project_id=project_id, branch=branch
+    )
     number_of_scans = scans_from_this_project_and_branch.filteredTotalCount
     remainder = number_of_scans % full_scan_cycle
     if remainder == 0:
         incremental = False
+
+    logger.info("Start checking scans of the same project and branch")
+
+    logger.info("Finish checking scans of the same project and branch")
     logger.info("create new scan")
     logger.info(f"The sast scan type will be: {'incremental' if incremental else 'full'} ")
     logger.info("create a pre signed url to upload zip file")
@@ -293,27 +305,20 @@ def cx_scan_from_local_zip_file(preset_name: str,
         logger.error("[ERROR]: Failed to upload zip file. Abort scan.")
         exit(1)
     logger.info("finish upload zip file")
+    sast_config = {
+        "incremental": "true" if incremental else "false",
+        "presetName": preset_name
+    }
     scan_configs = []
     for scanner in scanners:
         if scanner == "sast":
             scan_configs.append(
-                ScanConfig("sast",
-                           {
-                               "incremental": "true" if incremental else "false",
-                               "presetName": preset_name
-                           }
-                           )
+                ScanConfig("sast", sast_config)
             )
         else:
             scan_configs.append(ScanConfig(scanner))
-    scan_tags = {}
-    if scan_tag_key:
-        for index, key in enumerate(scan_tag_key):
-            try:
-                value = scan_tag_value[index]
-            except IndexError:
-                value = None
-            scan_tags.update({key: value})
+    scan_tags.update(sast_config)
+    logger.info(f"scan tags: {scan_tags}")
     scan_input = ScanInput(
         scan_type="upload",
         handler=Upload(upload_url=url, branch=branch),
@@ -432,6 +437,14 @@ def generate_report(cxone_server, project_id, scan_id: str, report_file_path: st
     logger.info("report generated successfully")
 
 
+def calculate_sha_256_hash(file_path):
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
+
+
 def run_scan_and_generate_reports(arguments):
     cxone_access_control_url = arguments.cxone_access_control_url
     cxone_server = arguments.cxone_server
@@ -452,6 +465,7 @@ def run_scan_and_generate_reports(arguments):
     project_path_list = arguments.project_name.split("/")
     project_name = project_path_list[-1]
     group_full_name = "/".join(project_path_list[0: len(project_path_list) - 1])
+    parallel_scan_cancellation_mode = arguments.parallel_scan_cancellation_mode
 
     logger.info(
         f"cxone_access_control_url: {cxone_access_control_url}\n"
@@ -472,6 +486,7 @@ def run_scan_and_generate_reports(arguments):
         f"scanners: {scanners}\n"
         f"scan_tag_key: {scan_tag_key}\n"
         f"scan_tag_value: {scan_tag_value}\n"
+        f"parallel_scan_cancellation_mode: {parallel_scan_cancellation_mode}\n"
     )
 
     group_names = [item for item in group_full_name.split("/")]
@@ -505,13 +520,20 @@ def run_scan_and_generate_reports(arguments):
     zip_file_path = create_zip_file_from_location_path(location_path, project_name, exclude_folders_str=exclude_folders,
                                                        exclude_files_str=exclude_files)
     logger.info(f"ZIP file created: {zip_file_path}")
+    sha_256_hash = calculate_sha_256_hash(zip_file_path)
+    scan_tags = {"SHA256": sha_256_hash}
+    if scan_tag_key:
+        for index, key in enumerate(scan_tag_key):
+            try:
+                value = scan_tag_value[index]
+            except IndexError:
+                value = None
+            scan_tags.update({key: value})
     project_id, scan_id = cx_scan_from_local_zip_file(preset_name=preset, project_name=project_name,
                                                       branch=branch,
                                                       zip_file_path=zip_file_path, incremental=incremental,
                                                       full_scan_cycle=full_scan_cycle, group_ids=group_ids,
-                                                      scanners=scanners, scan_tag_key=scan_tag_key,
-                                                      scan_tag_value=scan_tag_value)
-
+                                                      scanners=scanners, scan_tags=scan_tags)
     if scan_id is None:
         logger.info("Scan did not finish successfully, exit!")
         return
