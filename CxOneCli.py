@@ -531,7 +531,7 @@ def run_scan_and_generate_reports():
                 full_scans_created_at_list.append(datetime.datetime.strptime(scan.createdAt, time_stamp_format))
         sorted_datetime = sorted(full_scans_created_at_list)
         last_full_scan_datetime = sorted_datetime[-1]
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         previous_30_minutes = now - datetime.timedelta(minutes=30)
         if last_full_scan_datetime > previous_30_minutes:
             logger.info("Parallel scan cancelled! Reason: There are full scans from the last 30 minutes.")
