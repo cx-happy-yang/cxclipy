@@ -3,16 +3,6 @@ This a CLI script. It can be converted to binary file by using pyinstaller
 
 pyinstaller -y -F --clean CxOneCli.py
 
-Sample usage
-/home/happy/Documents/CxCliPy/dist/CxCliPy scan --cxsast_base_url http://192.168.3.84 --cxsast_username Admin \
---cxsast_password *** --preset "ASA Premium" --incremental False --location_type Folder \
---location_path /home/happy/Documents/JavaVulnerableLab \
---project_name /CxServer/happy-2022-11-21 --exclude_folders "test,integrationtest" --exclude_files "*min.js" \
---report_csv cx-report.csv \
---full_scan_cycle 10
-
-
-
 scan --cxone_access_control_url https://eu.iam.checkmarx.net --cxone_server https://eu.ast.checkmarx.net --cxone_tenant_name asean_2021_08 --cxone_grant_type refresh_token --cxone_refresh_token "****" --preset "ASA Premium"  --incremental false --location_path /home/happy/Documents/SourceCode/github/java/JavaVulnerableLab --project_name happy-test-2022-04-20 --branch master --exclude_folders "test,integrationtest" --exclude_files "*min.js" --report_csv cx-report.csv --full_scan_cycle 10 --cxone_proxy http://127.0.0.1:1081
 
 """
@@ -24,13 +14,30 @@ from os.path import exists
 from zipfile import ZipFile, ZIP_DEFLATED
 import logging
 import csv
-from urllib.parse import urlencode
+import datetime
 from CheckmarxPythonSDK.CxOne.AccessControlAPI import (
     get_group_by_name
 )
 from CheckmarxPythonSDK.CxOne.KeycloakAPI import (
     create_group,
     create_subgroup,
+)
+from CheckmarxPythonSDK.CxOne import (
+    get_a_list_of_projects,
+    create_a_project,
+    create_a_pre_signed_url_to_upload_files,
+    upload_zip_content_for_scanning,
+    create_scan,
+    get_a_list_of_scans,
+    get_a_scan_by_id,
+    get_summary_for_many_scans,
+)
+from CheckmarxPythonSDK.CxOne.dto import (
+    ProjectInput,
+    ScanInput,
+    Upload,
+    Project,
+    ScanConfig,
 )
 
 # create logger
@@ -41,6 +48,7 @@ ch.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
+time_stamp_format = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 def get_cx_supported_file_extensions():
@@ -62,12 +70,7 @@ def get_cx_supported_file_extensions():
     ]
 
 
-def get_command_line_arguments():
-    """
-
-    Returns:
-        Namespace
-    """
+def parse_arguments():
     import argparse
     description = 'A simple command-line interface for CxSAST in Python.'
     parser = argparse.ArgumentParser(description=description)
@@ -78,7 +81,7 @@ def get_command_line_arguments():
     parser.add_argument('--cxone_grant_type', required=True, help="CxOne grant type, refresh_token")
     parser.add_argument('--cxone_refresh_token', required=True, help="CxOne API Key")
     parser.add_argument('--preset', required=True, help="The preset (rule set) name")
-    parser.add_argument('--incremental', default=False, help="Set it True for incremental scan")
+    parser.add_argument('--incremental', help="Set it True for incremental scan")
     parser.add_argument('--location_path', required=True, help="Source code folder absolute path")
     parser.add_argument('--project_name', required=True, help="Checkmarx project name")
     parser.add_argument('--branch', required=True, help="git repo branch to scan")
@@ -93,14 +96,64 @@ def get_command_line_arguments():
     parser.add_argument('--cxone_proxy', help="proxy URL")
     parser.add_argument('--scan_tag_key', help="tag key, multiple keys can use comma separated value")
     parser.add_argument('--scan_tag_value', help="tag value, multiple keys can use comma separated value")
-    parser.add_argument('--parallel_scan_cancellation_mode', default="KeepNew", help="""
-     define what to do when you queue 
-     additional scans of the same project while the previous ones are still in the queue. 
-     KeepAll - process all the scans.
-     KeepOld - process the first scan you started and cancel the newer ones.
-     KeepNew - process the newest scan and cancel the previous ones.
-     """)
-    return parser.parse_known_args()
+    return parser.parse_known_args()[0]
+
+
+def process_arguments(arguments):
+    cxone_access_control_url = arguments.cxone_access_control_url
+    cxone_server = arguments.cxone_server
+    cxone_tenant_name = arguments.cxone_tenant_name
+    cxone_grant_type = arguments.cxone_grant_type
+    cxone_proxy = arguments.cxone_proxy
+    preset = arguments.preset
+    incremental = False if arguments.incremental.lower() == "false" else True
+    location_path = arguments.location_path
+    branch = arguments.branch
+    exclude_folders = arguments.exclude_folders
+    exclude_files = arguments.exclude_files
+    report_csv = arguments.report_csv
+    full_scan_cycle = int(arguments.full_scan_cycle)
+    scanners = [scanner for scanner in arguments.scanners.split(",")]
+    scan_tag_key = [key for key in arguments.scan_tag_key.split(",")] if arguments.scan_tag_key else None
+    scan_tag_value = [value for value in arguments.scan_tag_value.split(",")] if arguments.scan_tag_value else None
+    project_path_list = arguments.project_name.split("/")
+    project_name = project_path_list[-1]
+    group_full_name = "/".join(project_path_list[0: len(project_path_list) - 1])
+
+    logger.info(
+        f"cxone_access_control_url: {cxone_access_control_url}\n"
+        f"cxone_server: {cxone_server}\n"
+        f"cxone_tenant_name: {cxone_tenant_name}\n"
+        f"cxone_grant_type: {cxone_grant_type}\n"
+        f"cxone_proxy: {cxone_proxy}\n"
+        f"preset: {preset}\n"
+        f"incremental: {incremental}\n"
+        f"location_path: {location_path}\n"
+        f"branch: {branch}\n"
+        f"exclude_folders: {exclude_folders}\n"
+        f"exclude_files: {exclude_files}\n"
+        f"report_csv: {report_csv}\n"
+        f"full_scan_cycle: {full_scan_cycle}\n"
+        f"scanners: {scanners}\n"
+        f"scan_tag_key: {scan_tag_key}\n"
+        f"scan_tag_value: {scan_tag_value}\n"
+        f"project_name: {project_name}\n"
+        f"group_full_name: {group_full_name}\n"
+    )
+    return (
+        cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders, exclude_files,
+        report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name
+    )
+
+
+def get_command_line_arguments():
+    """
+
+    Returns:
+        Namespace
+    """
+    arguments = parse_arguments()
+    return process_arguments(arguments)
 
 
 def group_str_by_wildcard_character(exclusions):
@@ -169,13 +222,13 @@ def should_be_excluded(exclusions, target):
     return result
 
 
-def create_zip_file_from_location_path(location_path_str: str, project_name: str,
+def create_zip_file_from_location_path(location_path_str: str, project_id: str,
                                        exclude_folders_str=None, exclude_files_str=None):
     """
 
     Args:
         location_path_str (str):
-        project_name (str):
+        project_id (str):
         exclude_folders_str (str): comma separated string
         exclude_files_str (str): comma separated string
 
@@ -199,7 +252,7 @@ def create_zip_file_from_location_path(location_path_str: str, project_name: str
     if not path.exists():
         raise FileExistsError(f"{location_path_str} does not exist, abort scan")
     absolute_path_str = str(os.path.normpath(path.absolute()))
-    file_path = f"{temp_dir}/cx_{project_name}.zip"
+    file_path = f"{temp_dir}/{project_id}.zip"
     with ZipFile(file_path, "w", ZIP_DEFLATED) as zip_file:
         root_len = len(absolute_path_str) + 1
         for base, dirs, files in os.walk(absolute_path_str):
@@ -218,79 +271,29 @@ def create_zip_file_from_location_path(location_path_str: str, project_name: str
     return file_path
 
 
-def cx_scan_from_local_zip_file(preset_name: str,
-                                project_name: str,
-                                branch: str,
-                                zip_file_path: str,
-                                incremental: bool = False,
-                                full_scan_cycle=10,
-                                group_ids=None,
-                                scanners=None,
-                                scan_tags=None):
+def cx_scan_from_local_zip_file(
+        cxone_server: str, report_csv_path: str, preset: dict, project_id: str, branch: str, zip_file_path: str,
+        incremental: bool = False, scanners=None, scan_tags=None
+):
     """
 
     Args:
-        preset_name (str):
-        project_name (str):
+        cxone_server (str):
+        report_csv_path (str):
+        preset (str):
+        project_id (str):
         branch (str):
         zip_file_path (str):
         incremental (bool):
-        full_scan_cycle (int):
-        group_ids (list of str):
         scanners (list of str):
         scan_tags (dict, optional):
 
     Returns:
         return scan id if scan finished, otherwise return None
     """
-    from CheckmarxPythonSDK.CxOne import (
-        get_a_list_of_projects,
-        create_a_project,
-        create_a_pre_signed_url_to_upload_files,
-        upload_zip_content_for_scanning,
-        create_scan,
-        get_a_list_of_scans,
-        get_a_scan_by_id,
-        get_summary_for_many_scans,
-    )
-    from CheckmarxPythonSDK.CxOne.dto import (
-        ProjectInput,
-        ScanInput,
-        Upload,
-        Project,
-        ScanConfig,
-    )
-
     if not exists(zip_file_path):
         logger.error("[ERROR]: zip file not found. Abort scan.")
         exit(1)
-
-    project_collection = get_a_list_of_projects(name=project_name)
-
-    if not project_collection.projects:
-        logger.info("project does not exist. create project")
-        project = create_a_project(
-            project_input=ProjectInput(
-                name=project_name,
-                groups=group_ids
-            )
-        )
-        project_id = project.id
-        logger.info(f"new project name {project_name} with project_id: {project_id} created.")
-    else:
-        project_id = project_collection.projects[0].id
-    logger.info(f"project id: {project_id}")
-    scans_from_this_project_and_branch = get_a_list_of_scans(
-        offset=0, limit=1000, project_id=project_id, branch=branch
-    )
-    number_of_scans = scans_from_this_project_and_branch.filteredTotalCount
-    remainder = number_of_scans % full_scan_cycle
-    if remainder == 0:
-        incremental = False
-
-    logger.info("Start checking scans of the same project and branch")
-
-    logger.info("Finish checking scans of the same project and branch")
     logger.info("create new scan")
     logger.info(f"The sast scan type will be: {'incremental' if incremental else 'full'} ")
     logger.info("create a pre signed url to upload zip file")
@@ -305,20 +308,21 @@ def cx_scan_from_local_zip_file(preset_name: str,
         logger.error("[ERROR]: Failed to upload zip file. Abort scan.")
         exit(1)
     logger.info("finish upload zip file")
-    sast_config = {
-        "incremental": "true" if incremental else "false",
-        "presetName": preset_name
-    }
+
     scan_configs = []
     for scanner in scanners:
         if scanner == "sast":
             scan_configs.append(
-                ScanConfig("sast", sast_config)
+                ScanConfig(
+                    scan_type="sast", value={
+                        "incremental": "true" if incremental else "false",
+                        "presetName": preset
+                    }
+                )
             )
         else:
-            scan_configs.append(ScanConfig(scanner))
-    scan_tags.update(sast_config)
-    logger.info(f"scan tags: {scan_tags}")
+            scan_configs.append(ScanConfig(scan_type=scanner, value={}))
+
     scan_input = ScanInput(
         scan_type="upload",
         handler=Upload(upload_url=url, branch=branch),
@@ -352,8 +356,11 @@ def cx_scan_from_local_zip_file(preset_name: str,
         "Medium": medium_list[0].get("counter") if medium_list else 0,
         "Low": low_list[0].get("counter") if low_list else 0,
     }
-    logger.info(f"statistics: {statistics_updated}")
-    return project_id, scan_id
+    logger.info(f"sast scan statistics: {statistics_updated}")
+    logger.info(f"deleting zip file: {zip_file_path}")
+    pathlib.Path(zip_file_path).unlink()
+    generate_report(cxone_server=cxone_server, project_id=project_id, scan_id=scan_id, report_file_path=report_csv_path)
+    return scan_id
 
 
 def generate_report(cxone_server, project_id, scan_id: str, report_file_path: str):
@@ -445,50 +452,7 @@ def calculate_sha_256_hash(file_path):
         return sha256_hash.hexdigest()
 
 
-def run_scan_and_generate_reports(arguments):
-    cxone_access_control_url = arguments.cxone_access_control_url
-    cxone_server = arguments.cxone_server
-    cxone_tenant_name = arguments.cxone_tenant_name
-    cxone_grant_type = arguments.cxone_grant_type
-    cxone_proxy = arguments.cxone_proxy
-    preset = arguments.preset
-    incremental = False if arguments.incremental.lower() == "false" else True
-    location_path = arguments.location_path
-    branch = arguments.branch
-    exclude_folders = arguments.exclude_folders
-    exclude_files = arguments.exclude_files
-    report_csv = arguments.report_csv
-    full_scan_cycle = int(arguments.full_scan_cycle)
-    scanners = [scanner for scanner in arguments.scanners.split(",")]
-    scan_tag_key = [key for key in arguments.scan_tag_key.split(",")] if arguments.scan_tag_key else None
-    scan_tag_value = [value for value in arguments.scan_tag_value.split(",")] if arguments.scan_tag_value else None
-    project_path_list = arguments.project_name.split("/")
-    project_name = project_path_list[-1]
-    group_full_name = "/".join(project_path_list[0: len(project_path_list) - 1])
-    parallel_scan_cancellation_mode = arguments.parallel_scan_cancellation_mode
-
-    logger.info(
-        f"cxone_access_control_url: {cxone_access_control_url}\n"
-        f"cxone_server: {cxone_server}\n"
-        f"cxone_tenant_name: {cxone_tenant_name}\n"
-        f"cxone_grant_type: {cxone_grant_type}\n"
-        f"cxone_proxy: {cxone_proxy}\n"
-        f"preset: {preset}\n"
-        f"incremental: {incremental}\n"
-        f"location_path: {location_path}\n"
-        f"project_name: {project_name}\n"
-        f"branch: {branch}\n"
-        f"exclude_folders: {exclude_folders}\n"
-        f"exclude_files: {exclude_files}\n"
-        f"report_csv: {report_csv}\n"
-        f"full_scan_cycle: {full_scan_cycle}\n"
-        f"group_full_name: {group_full_name}\n"
-        f"scanners: {scanners}\n"
-        f"scan_tag_key: {scan_tag_key}\n"
-        f"scan_tag_value: {scan_tag_value}\n"
-        f"parallel_scan_cancellation_mode: {parallel_scan_cancellation_mode}\n"
-    )
-
+def get_or_create_groups(group_full_name, cxone_tenant_name):
     group_names = [item for item in group_full_name.split("/")]
     group = get_group_by_name(realm=cxone_tenant_name, group_name=group_full_name)
     if not group:
@@ -515,13 +479,68 @@ def run_scan_and_generate_reports(arguments):
     group = get_group_by_name(realm=cxone_tenant_name, group_name=group_full_name)
     group_id = group.id
     group_ids = [group_id]
+    return group_ids
 
+
+def run_scan_and_generate_reports():
+    (
+        cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders, exclude_files,
+        report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
+    ) = get_command_line_arguments()
+    group_ids = get_or_create_groups(group_full_name, cxone_tenant_name)
+    project_collection = get_a_list_of_projects(name=project_name)
+    if not project_collection.projects:
+        logger.info("project does not exist. create project")
+        project = create_a_project(
+            project_input=ProjectInput(
+                name=project_name,
+                groups=group_ids
+            )
+        )
+        project_id = project.id
+        logger.info(f"new project name {project_name} with project_id: {project_id} created.")
+    else:
+        project_id = project_collection.projects[0].id
+    logger.info(f"project id: {project_id}")
     logger.info(f"creating zip file by zip the source code folder: {location_path}")
-    zip_file_path = create_zip_file_from_location_path(location_path, project_name, exclude_folders_str=exclude_folders,
-                                                       exclude_files_str=exclude_files)
+    zip_file_path = create_zip_file_from_location_path(
+        location_path_str=location_path, project_id=project_id, exclude_folders_str=exclude_folders,
+        exclude_files_str=exclude_files
+    )
     logger.info(f"ZIP file created: {zip_file_path}")
     sha_256_hash = calculate_sha_256_hash(zip_file_path)
-    scan_tags = {"SHA256": sha_256_hash}
+    logger.info(f"SHA256 of the zip file: {sha_256_hash}")
+    scan_collection = get_a_list_of_scans(
+        offset=0, limit=1024, project_id=project_id, branch=branch
+    )
+    number_of_scans = scan_collection.filteredTotalCount
+    remainder = number_of_scans % full_scan_cycle
+    if remainder == 0:
+        logger.info(f"Now this scan has reached a full scan cycle: {full_scan_cycle}, "
+                    f"it is required to initiate a Full scan")
+        incremental = False
+    file_hash_list_from_tags = [scan.tags.get("SHA256") for scan in scan_collection.scans]
+    if sha_256_hash in file_hash_list_from_tags:
+        logger.info(f"identical code detected with SHA256 file hash: {sha_256_hash}, abort the scan!")
+        return
+    if not incremental:
+        full_scans_created_at_list = []
+        for scan in scan_collection.scans:
+            tag_incremental = scan.tags.get("incremental")
+            if tag_incremental and tag_incremental.lower() == "false":
+                full_scans_created_at_list.append(datetime.datetime.strptime(scan.createdAt, time_stamp_format))
+        sorted_datetime = sorted(full_scans_created_at_list)
+        last_full_scan_datetime = sorted_datetime[-1]
+        now = datetime.datetime.now()
+        previous_30_minutes = now - datetime.timedelta(minutes=30)
+        if last_full_scan_datetime > previous_30_minutes:
+            logger.info("Parallel scan cancelled! Reason: There are full scans from the last 30 minutes.")
+            return
+    scan_tags = {
+        "SHA256": sha_256_hash,
+        "incremental": str(incremental),
+        "preset": preset,
+    }
     if scan_tag_key:
         for index, key in enumerate(scan_tag_key):
             try:
@@ -529,23 +548,13 @@ def run_scan_and_generate_reports(arguments):
             except IndexError:
                 value = None
             scan_tags.update({key: value})
-    project_id, scan_id = cx_scan_from_local_zip_file(preset_name=preset, project_name=project_name,
-                                                      branch=branch,
-                                                      zip_file_path=zip_file_path, incremental=incremental,
-                                                      full_scan_cycle=full_scan_cycle, group_ids=group_ids,
-                                                      scanners=scanners, scan_tags=scan_tags)
-    if scan_id is None:
-        logger.info("Scan did not finish successfully, exit!")
-        return
-
-    logger.info(f"deleting zip file: {zip_file_path}")
-    pathlib.Path(zip_file_path).unlink()
-
-    generate_report(cxone_server=cxone_server, project_id=project_id, scan_id=scan_id, report_file_path=report_csv)
+    logger.info(f"scan tags: {scan_tags}")
+    cx_scan_from_local_zip_file(
+        cxone_server=cxone_server, report_csv_path=report_csv,
+        preset=preset, project_id=project_id, branch=branch, zip_file_path=zip_file_path,
+        incremental=incremental, scanners=scanners, scan_tags=scan_tags
+    )
 
 
 if __name__ == '__main__':
-    # get command line arguments
-    cli_arguments = get_command_line_arguments()
-    cli_arguments = cli_arguments[0]
-    run_scan_and_generate_reports(cli_arguments)
+    run_scan_and_generate_reports()
