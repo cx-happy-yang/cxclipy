@@ -1,2 +1,2 @@
-CheckmarxPythonSDK==1.0.1
+CheckmarxPythonSDK==1.0.2
 cryptography==3.1.1
