@@ -343,7 +343,7 @@ def cx_scan_from_local_zip_file(
             break
         elif scan_status in ["Failed", "Canceled"]:
             return None
-        time.sleep(10)
+        time.sleep(60)
 
     logger.info("get statistics results by scan id")
     statistics = get_summary_for_many_scans(scan_ids=[scan_id])
@@ -540,6 +540,7 @@ def run_scan_and_generate_reports():
         "SHA256": sha_256_hash,
         "incremental": str(incremental),
         "preset": preset,
+        "branch": branch,
     }
     if scan_tag_key:
         for index, key in enumerate(scan_tag_key):
