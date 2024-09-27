@@ -523,13 +523,13 @@ def run_scan_and_generate_reports():
     if sha_256_hash in file_hash_list_from_tags:
         logger.info(f"identical code detected with SHA256 file hash: {sha_256_hash}, abort the scan!")
         return
-    if not incremental:
-        full_scans_created_at_list = []
-        for scan in scan_collection.scans:
-            tag_incremental = scan.tags.get("incremental")
-            if tag_incremental and tag_incremental.lower() == "false":
-                full_scans_created_at_list.append(datetime.datetime.strptime(scan.createdAt, time_stamp_format))
-        sorted_datetime = sorted(full_scans_created_at_list)
+    full_scans_created_at_list = []
+    for scan in scan_collection.scans:
+        tag_incremental = scan.tags.get("incremental")
+        if tag_incremental and tag_incremental.lower() == "false":
+            full_scans_created_at_list.append(datetime.datetime.strptime(scan.createdAt, time_stamp_format))
+    sorted_datetime = sorted(full_scans_created_at_list)
+    if not incremental and sorted_datetime:
         last_full_scan_datetime = sorted_datetime[-1]
         now = datetime.datetime.utcnow()
         previous_30_minutes = now - datetime.timedelta(minutes=30)
