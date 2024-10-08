@@ -96,6 +96,7 @@ def parse_arguments():
     parser.add_argument('--cxone_proxy', help="proxy URL")
     parser.add_argument('--scan_tag_key', help="tag key, multiple keys can use comma separated value")
     parser.add_argument('--scan_tag_value', help="tag value, multiple keys can use comma separated value")
+    parser.add_argument('--parallel_scan_cancel', default="false", help="enable parallel scan cancel")
     return parser.parse_known_args()[0]
 
 
@@ -119,6 +120,7 @@ def process_arguments(arguments):
     project_path_list = arguments.project_name.split("/")
     project_name = project_path_list[-1]
     group_full_name = "/".join(project_path_list[0: len(project_path_list) - 1])
+    parallel_scan_cancel = False if arguments.parallel_scan_cancel.lower() == "false" else True
 
     logger.info(
         f"cxone_access_control_url: {cxone_access_control_url}\n"
@@ -139,10 +141,12 @@ def process_arguments(arguments):
         f"scan_tag_value: {scan_tag_value}\n"
         f"project_name: {project_name}\n"
         f"group_full_name: {group_full_name}\n"
+        f"parallel_scan_cancel: {parallel_scan_cancel}\n"
     )
     return (
         cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders, exclude_files,
-        report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name
+        report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
+        parallel_scan_cancel
     )
 
 
@@ -486,6 +490,7 @@ def run_scan_and_generate_reports():
     (
         cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders, exclude_files,
         report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
+        parallel_scan_cancel,
     ) = get_command_line_arguments()
     group_ids = get_or_create_groups(group_full_name, cxone_tenant_name)
     project_collection = get_a_list_of_projects(name=project_name)
@@ -529,7 +534,7 @@ def run_scan_and_generate_reports():
         if tag_incremental and tag_incremental.lower() == "false":
             full_scans_created_at_list.append(datetime.datetime.strptime(scan.createdAt, time_stamp_format))
     sorted_datetime = sorted(full_scans_created_at_list)
-    if not incremental and sorted_datetime:
+    if parallel_scan_cancel and not incremental and sorted_datetime:
         last_full_scan_datetime = sorted_datetime[-1]
         now = datetime.datetime.utcnow()
         previous_30_minutes = now - datetime.timedelta(minutes=30)
