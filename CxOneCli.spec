@@ -28,7 +28,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='CxCliPy',
+    name='CxOneCli',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
