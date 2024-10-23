@@ -39,6 +39,8 @@ from CheckmarxPythonSDK.CxOne.dto import (
     Project,
     ScanConfig,
 )
+from pygit2 import Repository
+from pygit2.enums import SortMode
 
 # create logger
 logger = logging.getLogger(__name__)
@@ -97,6 +99,9 @@ def parse_arguments():
     parser.add_argument('--scan_tag_key', help="tag key, multiple keys can use comma separated value")
     parser.add_argument('--scan_tag_value', help="tag value, multiple keys can use comma separated value")
     parser.add_argument('--parallel_scan_cancel', default="false", help="enable parallel scan cancel")
+    parser.add_argument('--scan_commit_number', default=1,
+                        help="number of commit to trigger new scan. every commit to trigger new scan would flush CxOne"
+                        )
     return parser.parse_known_args()[0]
 
 
@@ -121,6 +126,7 @@ def process_arguments(arguments):
     project_name = project_path_list[-1]
     group_full_name = "/".join(project_path_list[0: len(project_path_list) - 1])
     parallel_scan_cancel = False if arguments.parallel_scan_cancel.lower() == "false" else True
+    scan_commit_number = int(arguments.scan_commit_number)
 
     logger.info(
         f"cxone_access_control_url: {cxone_access_control_url}\n"
@@ -142,11 +148,12 @@ def process_arguments(arguments):
         f"project_name: {project_name}\n"
         f"group_full_name: {group_full_name}\n"
         f"parallel_scan_cancel: {parallel_scan_cancel}\n"
+        f"scan_commit_number: {scan_commit_number}\n"
     )
     return (
         cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders, exclude_files,
         report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
-        parallel_scan_cancel
+        parallel_scan_cancel, scan_commit_number
     )
 
 
@@ -486,11 +493,28 @@ def get_or_create_groups(group_full_name, cxone_tenant_name):
     return group_ids
 
 
+def get_git_commit_history(location_path, max_level=100):
+    result = []
+    repo = Repository(f'{location_path}/.git')
+    for commit in repo.walk(repo.head.target, SortMode.TIME):
+        if max_level > 0:
+            result.append(
+                {
+                    "commit_id": str(commit.id),
+                    "commit_time": str(commit.commit_time),
+                }
+            )
+        else:
+            break
+        max_level -= 1
+    return result
+
+
 def run_scan_and_generate_reports():
     (
         cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders, exclude_files,
         report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
-        parallel_scan_cancel,
+        parallel_scan_cancel, scan_commit_number
     ) = get_command_line_arguments()
     group_ids = get_or_create_groups(group_full_name, cxone_tenant_name)
     project_collection = get_a_list_of_projects(name=project_name)
@@ -516,7 +540,7 @@ def run_scan_and_generate_reports():
     sha_256_hash = calculate_sha_256_hash(zip_file_path)
     logger.info(f"SHA256 of the zip file: {sha_256_hash}")
     scan_collection = get_a_list_of_scans(
-        offset=0, limit=1024, project_id=project_id, branch=branch
+        offset=0, limit=1024, project_id=project_id, branch=branch, sort=["+created_at"]
     )
     number_of_scans = scan_collection.filteredTotalCount
     remainder = number_of_scans % full_scan_cycle
@@ -525,9 +549,30 @@ def run_scan_and_generate_reports():
                     f"it is required to initiate a Full scan")
         incremental = False
     file_hash_list_from_tags = [scan.tags.get("SHA256") for scan in scan_collection.scans]
+    # ignore identical code scan
     if sha_256_hash in file_hash_list_from_tags:
         logger.info(f"identical code detected with SHA256 file hash: {sha_256_hash}, abort the scan!")
         return
+    # trigger scan by number of commits
+    git_commit_history = get_git_commit_history(location_path=location_path)
+    if scan_collection.scans and scan_commit_number > 1:
+        last_scan_tags = scan_collection.scans[0].tags
+        commit_id = last_scan_tags.get("commit_id")
+        commit_time = last_scan_tags.get("commit_time")
+        if commit_id and commit_time:
+            index_of_last_scan_commit_id_in_history = git_commit_history.index(
+                {"commit_id": commit_id, "commit_time": commit_time}
+            )
+            if index_of_last_scan_commit_id_in_history + 1 <= scan_commit_number:
+                current_commit_id = git_commit_history[0].get("commit_id")
+                logger.info(f"initiate scan by every {scan_commit_number} commits, "
+                            f"last scan commit id: {commit_id}, "
+                            f"current commit id: {current_commit_id}, "
+                            f"make {scan_commit_number - index_of_last_scan_commit_id_in_history} "
+                            f"more commit to initiate scan")
+                return
+
+    # parallel scan cancel on full scans
     full_scans_created_at_list = []
     for scan in scan_collection.scans:
         tag_incremental = scan.tags.get("incremental")
@@ -546,6 +591,8 @@ def run_scan_and_generate_reports():
         "incremental": str(incremental),
         "preset": preset,
         "branch": branch,
+        "commit_id": git_commit_history[0].get("commit_id"),
+        "commit_time": git_commit_history[0].get("commit_time"),
     }
     if scan_tag_key:
         for index, key in enumerate(scan_tag_key):
