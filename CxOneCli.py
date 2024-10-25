@@ -551,7 +551,7 @@ def run_scan_and_generate_reports():
     file_hash_list_from_tags = [scan.tags.get("SHA256") for scan in scan_collection.scans]
     # ignore identical code scan
     if sha_256_hash in file_hash_list_from_tags:
-        logger.info(f"identical code detected with SHA256 file hash: {sha_256_hash}, abort the scan!")
+        logger.info(f"identical code detected with SHA256 file hash: {sha_256_hash}, Cancel this scan request")
         return
     # trigger scan by number of commits
     git_commit_history = get_git_commit_history(location_path=location_path)
@@ -569,22 +569,13 @@ def run_scan_and_generate_reports():
                             f"last scan commit id: {commit_id}, "
                             f"current commit id: {current_commit_id}, "
                             f"make {scan_commit_number - index_of_last_scan_commit_id_in_history} "
-                            f"more commit to initiate scan")
+                            f"more commit to initiate scan, Cancel this scan request")
                 return
-
-    # parallel scan cancel on full scans
-    full_scans_created_at_list = []
+    # parallel scan
     for scan in scan_collection.scans:
-        tag_incremental = scan.tags.get("incremental")
-        if tag_incremental and tag_incremental.lower() == "false":
-            full_scans_created_at_list.append(datetime.datetime.strptime(scan.createdAt, time_stamp_format))
-    sorted_datetime = sorted(full_scans_created_at_list)
-    if parallel_scan_cancel and not incremental and sorted_datetime:
-        last_full_scan_datetime = sorted_datetime[-1]
-        now = datetime.datetime.utcnow()
-        previous_30_minutes = now - datetime.timedelta(minutes=30)
-        if last_full_scan_datetime > previous_30_minutes:
-            logger.info("Parallel scan cancelled! Reason: There are full scans from the last 30 minutes.")
+        if scan.status.lower() == "running" and parallel_scan_cancel:
+            logger.info("There are running scans.")
+            logger.info("Parallel run controlled, Cancel this scan request")
             return
     scan_tags = {
         "SHA256": sha_256_hash,
