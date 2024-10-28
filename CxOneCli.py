@@ -25,6 +25,7 @@ from CheckmarxPythonSDK.CxOne.KeycloakAPI import (
 from CheckmarxPythonSDK.CxOne import (
     get_a_list_of_projects,
     create_a_project,
+    update_a_project,
     create_a_pre_signed_url_to_upload_files,
     upload_zip_content_for_scanning,
     create_scan,
@@ -51,25 +52,6 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 time_stamp_format = "%Y-%m-%dT%H:%M:%S.%fZ"
-
-
-def get_cx_supported_file_extensions():
-    return [
-        '.apex', '.apexp', '.asax', '.ascx', '.asp', '.aspx', '.bas', '.bdy', '.c', '.c++', '.cc', '.cgi', '.cls',
-        '.component', '.conf', '.config', '.cpp', '.cs', '.cshtml', '.csproj', '.ctl', '.ctp', '.cxx', '.dsr', '.ec',
-        '.erb', '.fnc', '.frm', '.go', '.gradle', '.groovy', '.gsh', '.gsp', '.gtl', '.gvy', '.gy', '.h', '.h++',
-        '.handlebars', '.hbs', '.hh', '.hpp', '.htm', '.html', '.hxx', '.inc', '.jade', '.java', '.javasln', '.js',
-        '.jsf', '.json', '.jsp', '.jspf', '.lock', '.m', '.master', '.-meta.xml', '.mf', '.object', '.page', '.pc',
-        '.pck', '.php', '.php3', '.php4', '.php5', '.phtm', '.phtml', '.pkb', '.pkh', '.pks', '.pl', '.plist', '.pls',
-        '.plx', '.pm', '.prc', '.project', '.properties', '.psgi', '.py', '.rb', '.report', '.rhtml', '.rjs', '.rxml',
-        '.scala', '.sln', '.spc', '.sqb', '.sqf', '.sqh', '.sql', '.sqp', '.sqt',
-        '.sqtb', '.sqth', '.sqv', '.swift', '.tag', '.tgr', '.tld', '.tpb', '.tpl', '.tps', '.trg', '.trigger', '.ts',
-        '.tsx', '.twig', '.vb', '.vbp', '.vbs', '.wod', '.workflow', '.xaml', '.xhtml', '.xib', '.xml', '.xsaccess',
-        '.xsapp', '.xsjs', '.xsjslib', '-meta.xml', '.rpgle', '.pug', '.vue', '.mustache', '.cbl', '.jsx', '.apxc',
-        '.cpy', '.kt', '.rpg38', '.pro', '.csv', '.ftl', '.evt', '.sqlrpg', '.eco', '.cmp', '.txt', '.pco', '.ac',
-        '.cob', '.rpg', '.cmake', '.sqlrpgle', '.tex', '.vm', '.kts', '.latex', '.am', '.app', ".yml", ".yaml", ".rs",
-        ".dart", ".dspf", ".vbproj", ".toml", ".cfg", ".sbt", ".private", ".resolved", ".mod", ".sum", ".snapshot"
-    ]
 
 
 def parse_arguments():
@@ -258,7 +240,6 @@ def create_zip_file_from_location_path(location_path_str: str, project_id: str,
     from pathlib import Path
     import tempfile
     temp_dir = tempfile.gettempdir()
-    extensions = get_cx_supported_file_extensions()
     path = Path(location_path_str)
     if not path.exists():
         raise FileExistsError(f"{location_path_str} does not exist, abort scan")
@@ -272,11 +253,8 @@ def create_zip_file_from_location_path(location_path_str: str, project_id: str,
                 continue
             for file in files:
                 file_lower_case = file.lower()
-                if file_lower_case not in ["dockerfile", "cartfile", "podfile", "gemfile", "cpanfile"]:
-                    if not file_lower_case.endswith(tuple(extensions)):
-                        continue
-                    if should_be_excluded(exclude_files, file_lower_case):
-                        continue
+                if should_be_excluded(exclude_files, file_lower_case):
+                    continue
                 fn = os.path.join(base, file)
                 zip_file.write(fn, fn[root_len:])
     return file_path
@@ -537,7 +515,20 @@ def run_scan_and_generate_reports():
         project_id = project.id
         logger.info(f"new project name {project_name} with project_id: {project_id} created.")
     else:
-        project_id = project_collection.projects[0].id
+        project = project_collection.projects[0]
+        project_id = project.id
+        if not project.groups:
+            project_input = ProjectInput(
+                name=project.name,
+                groups=group_ids,
+                repo_url=project.repoUrl,
+                main_branch=project.mainBranch,
+                origin=project.origin,
+                tags=project.tags,
+                criticality=project.criticality
+            )
+            update_a_project(project_id, project_input)
+
     logger.info(f"project id: {project_id}")
     logger.info(f"creating zip file by zip the source code folder: {location_path}")
     zip_file_path = create_zip_file_from_location_path(
