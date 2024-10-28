@@ -331,6 +331,14 @@ def cx_scan_from_local_zip_file(
                     }
                 )
             )
+        elif scanner == "sca":
+            scan_configs.append(
+                ScanConfig(
+                    scan_type="sca", value={
+                        "exploitablePath": "true",
+                    }
+                )
+            )
         else:
             scan_configs.append(ScanConfig(scan_type=scanner, value={}))
 
