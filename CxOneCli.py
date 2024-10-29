@@ -84,6 +84,9 @@ def parse_arguments():
     parser.add_argument('--scan_commit_number', default=1,
                         help="number of commit to trigger new scan. every commit to trigger new scan would flush CxOne"
                         )
+    parser.add_argument('--sca_exploitable_path', default="false",
+                        help="enable SCA exploitable path or not"
+                        )
     return parser.parse_known_args()[0]
 
 
@@ -109,6 +112,7 @@ def process_arguments(arguments):
     group_full_name = "/".join(project_path_list[0: len(project_path_list) - 1])
     parallel_scan_cancel = False if arguments.parallel_scan_cancel.lower() == "false" else True
     scan_commit_number = int(arguments.scan_commit_number)
+    sca_exploitable_path = False if arguments.sca_exploitable_path.lower() == "false" else True
 
     logger.info(
         f"cxone_access_control_url: {cxone_access_control_url}\n"
@@ -131,11 +135,12 @@ def process_arguments(arguments):
         f"group_full_name: {group_full_name}\n"
         f"parallel_scan_cancel: {parallel_scan_cancel}\n"
         f"scan_commit_number: {scan_commit_number}\n"
+        f"sca_exploitable_path: {sca_exploitable_path}\n"
     )
     return (
         cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders, exclude_files,
         report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
-        parallel_scan_cancel, scan_commit_number
+        parallel_scan_cancel, scan_commit_number, sca_exploitable_path
     )
 
 
@@ -262,7 +267,7 @@ def create_zip_file_from_location_path(location_path_str: str, project_id: str,
 
 def cx_scan_from_local_zip_file(
         cxone_server: str, report_csv_path: str, preset: dict, project_id: str, branch: str, zip_file_path: str,
-        incremental: bool = False, scanners=None, scan_tags=None
+        incremental: bool = False, scanners=None, scan_tags=None, sca_exploitable_path=False
 ):
     """
 
@@ -276,6 +281,7 @@ def cx_scan_from_local_zip_file(
         incremental (bool):
         scanners (list of str):
         scan_tags (dict, optional):
+        sca_exploitable_path (bool):::
 
     Returns:
         return scan id if scan finished, otherwise return None
@@ -313,7 +319,7 @@ def cx_scan_from_local_zip_file(
             scan_configs.append(
                 ScanConfig(
                     scan_type="sca", value={
-                        "exploitablePath": "true",
+                        "exploitablePath": "true" if sca_exploitable_path else "false",
                     }
                 )
             )
@@ -500,7 +506,7 @@ def run_scan_and_generate_reports():
     (
         cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders, exclude_files,
         report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
-        parallel_scan_cancel, scan_commit_number
+        parallel_scan_cancel, scan_commit_number, sca_exploitable_path
     ) = get_command_line_arguments()
     group_ids = get_or_create_groups(group_full_name, cxone_tenant_name)
     project_collection = get_a_list_of_projects(name=project_name)
@@ -583,6 +589,7 @@ def run_scan_and_generate_reports():
         "branch": branch,
         "commit_id": git_commit_history[0].get("commit_id"),
         "commit_time": git_commit_history[0].get("commit_time"),
+        "sca_exploitable_path": str(sca_exploitable_path)
     }
     if scan_tag_key:
         for index, key in enumerate(scan_tag_key):
@@ -595,7 +602,7 @@ def run_scan_and_generate_reports():
     cx_scan_from_local_zip_file(
         cxone_server=cxone_server, report_csv_path=report_csv,
         preset=preset, project_id=project_id, branch=branch, zip_file_path=zip_file_path,
-        incremental=incremental, scanners=scanners, scan_tags=scan_tags
+        incremental=incremental, scanners=scanners, scan_tags=scan_tags, sca_exploitable_path=sca_exploitable_path
     )
 
 
