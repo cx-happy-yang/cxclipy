@@ -233,8 +233,8 @@ def create_zip_file_from_location_path(location_path_str: str, project_id: str,
     Returns:
         str (ZIP file path)
     """
-    exclude_folders = ".*,bin,target,images,Lib,node_modules"
-    exclude_files = ".*,*.min.js"
+    exclude_folders = "bin,target,images,Lib,node_modules"
+    exclude_files = "*.min.js"
     if exclude_folders_str is not None:
         exclude_folders += ","
         exclude_folders += exclude_folders_str
