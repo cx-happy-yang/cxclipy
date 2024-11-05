@@ -220,6 +220,19 @@ def should_be_excluded(exclusions, target):
     return result
 
 
+def add_java_file(location_path):
+    file_name = location_path + "/HelloWorld.java"
+    with open(file=file_name, mode="w") as file:
+        file.write(
+            """class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("Hello World!");
+    }
+}
+            """
+        )
+
+
 def create_zip_file_from_location_path(location_path_str: str, project_id: str,
                                        exclude_folders_str=None, exclude_files_str=None):
     """
@@ -249,6 +262,7 @@ def create_zip_file_from_location_path(location_path_str: str, project_id: str,
     if not path.exists():
         raise FileExistsError(f"{location_path_str} does not exist, abort scan")
     absolute_path_str = str(os.path.normpath(path.absolute()))
+    add_java_file(absolute_path_str)
     file_path = f"{temp_dir}/{project_id}.zip"
     with ZipFile(file_path, "w", ZIP_DEFLATED) as zip_file:
         root_len = len(absolute_path_str) + 1
