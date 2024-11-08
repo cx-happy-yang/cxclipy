@@ -40,7 +40,7 @@ from CheckmarxPythonSDK.CxOne.dto import (
     Project,
     ScanConfig,
 )
-from pygit2 import Repository
+from pygit2 import Repository, GitError
 from pygit2.enums import SortMode
 
 # create logger
@@ -501,18 +501,21 @@ def get_or_create_groups(group_full_name, cxone_tenant_name):
 
 def get_git_commit_history(location_path, max_level=100):
     result = []
-    repo = Repository(f'{location_path}/.git')
-    for commit in repo.walk(repo.head.target, SortMode.TIME):
-        if max_level > 0:
-            result.append(
-                {
-                    "commit_id": str(commit.id),
-                    "commit_time": str(commit.commit_time),
-                }
-            )
-        else:
-            break
-        max_level -= 1
+    try:
+        repo = Repository(f'{location_path}/.git')
+        for commit in repo.walk(repo.head.target, SortMode.TIME):
+            if max_level > 0:
+                result.append(
+                    {
+                        "commit_id": str(commit.id),
+                        "commit_time": str(commit.commit_time),
+                    }
+                )
+            else:
+                break
+            max_level -= 1
+    except GitError:
+        logger.info('Repository not found or repository is private')
     return result
 
 
@@ -574,7 +577,7 @@ def run_scan_and_generate_reports():
         return
     # trigger scan by number of commits
     git_commit_history = get_git_commit_history(location_path=location_path)
-    if scan_collection.scans and scan_commit_number > 1:
+    if scan_collection.scans and scan_commit_number > 1 and git_commit_history:
         last_scan_tags = scan_collection.scans[0].tags
         commit_id = last_scan_tags.get("commit_id")
         commit_time = last_scan_tags.get("commit_time")
@@ -601,10 +604,15 @@ def run_scan_and_generate_reports():
         "incremental": str(incremental),
         "preset": preset,
         "branch": branch,
-        "commit_id": git_commit_history[0].get("commit_id"),
-        "commit_time": git_commit_history[0].get("commit_time"),
         "sca_exploitable_path": str(sca_exploitable_path)
     }
+    if git_commit_history:
+        scan_tags.update(
+            {
+                "commit_id": git_commit_history[0].get("commit_id"),
+                "commit_time": git_commit_history[0].get("commit_time"),
+            }
+        )
     if scan_tag_key:
         for index, key in enumerate(scan_tag_key):
             try:
