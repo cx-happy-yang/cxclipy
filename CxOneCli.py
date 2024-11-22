@@ -509,6 +509,7 @@ def get_git_commit_history(location_path, max_level=100):
                     {
                         "commit_id": str(commit.id),
                         "commit_time": str(commit.commit_time),
+                        "committer": str(commit.committer),
                     }
                 )
             else:
@@ -582,9 +583,8 @@ def run_scan_and_generate_reports():
         commit_id = last_scan_tags.get("commit_id")
         commit_time = last_scan_tags.get("commit_time")
         if commit_id and commit_time:
-            index_of_last_scan_commit_id_in_history = git_commit_history.index(
-                {"commit_id": commit_id, "commit_time": commit_time}
-            )
+            index_of_last_scan_commit_id_in_history = next((index for (index, d) in enumerate(git_commit_history)
+                                                            if d["commit_id"] == commit_id), None)
             if index_of_last_scan_commit_id_in_history + 1 <= scan_commit_number:
                 current_commit_id = git_commit_history[0].get("commit_id")
                 logger.info(f"initiate scan by every {scan_commit_number} commits, "
@@ -611,6 +611,7 @@ def run_scan_and_generate_reports():
             {
                 "commit_id": git_commit_history[0].get("commit_id"),
                 "commit_time": git_commit_history[0].get("commit_time"),
+                "committer": git_commit_history[0].get("committer"),
             }
         )
     if scan_tag_key:
