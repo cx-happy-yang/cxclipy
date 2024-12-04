@@ -1,3 +1,5 @@
 .idea
 venv
 cx-report.csv
+*.sh
+CxOneCli
