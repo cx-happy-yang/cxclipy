@@ -69,8 +69,8 @@ def parse_arguments():
     parser.add_argument('--location_path', required=True, help="Source code folder absolute path")
     parser.add_argument('--project_name', required=True, help="Checkmarx project name")
     parser.add_argument('--branch', required=True, help="git repo branch to scan")
-    parser.add_argument('--scanners', default="sast,sca,kics,apisec,containers",
-                        help="scanners: sast,sca,kics,apisec,containers")
+    parser.add_argument('--scanners', default="sast,sca,kics,apisec,containers,microengines",
+                        help="scanners: sast,sca,kics,apisec,containers,microengines")
     parser.add_argument('--exclude_folders', help="exclude folders")
     parser.add_argument('--exclude_files', help='exclude files')
     parser.add_argument('--report_csv', default=None, help="csv report file path")
@@ -334,6 +334,16 @@ def cx_scan_from_local_zip_file(
                 ScanConfig(
                     scan_type="sca", value={
                         "exploitablePath": "true" if sca_exploitable_path else "false",
+                        # "enableContainersScan": "false",
+                    }
+                )
+            )
+        elif scanner == "microengines":
+            scan_configs.append(
+                ScanConfig(
+                    scan_type="microengines", value={
+                        "scorecard": "true",
+                        "2ms": "true",
                     }
                 )
             )
@@ -365,10 +375,12 @@ def cx_scan_from_local_zip_file(
     logger.info("get statistics results by scan id")
     statistics = get_summary_for_many_scans(scan_ids=[scan_id])
     statistics = statistics.get("scansSummaries")[0].sastCounters.get('severityStatusCounters')
+    critical_list = [item for item in statistics if item.get("severity") == "CRITICAL"]
     high_list = [item for item in statistics if item.get("severity") == "HIGH"]
     medium_list = [item for item in statistics if item.get("severity") == "MEDIUM"]
     low_list = [item for item in statistics if item.get("severity") == "LOW"]
     statistics_updated = {
+        "Critical": critical_list[0].get("counter") if critical_list else 0,
         "High": high_list[0].get("counter") if high_list else 0,
         "Medium": medium_list[0].get("counter") if medium_list else 0,
         "Low": low_list[0].get("counter") if low_list else 0,
@@ -395,23 +407,19 @@ def generate_report(cxone_server, project_id, scan_id: str, report_file_path: st
     logger.info("start report generation")
     from CheckmarxPythonSDK.CxOne import get_sast_results_by_scan_id
     offset = 0
-    limit = 500
+    limit = 100
+    page = 1
     sast_results_collection = get_sast_results_by_scan_id(scan_id=scan_id, offset=offset, limit=limit)
     total_count = int(sast_results_collection.get("totalCount"))
     sast_results = sast_results_collection.get("results")
     if total_count > limit:
-        number_of_whole_request = (total_count // limit) - 1
-        while number_of_whole_request > 0:
-            offset += 1
+        while True:
+            offset = page * limit
+            if offset >= total_count:
+                break
             sast_results_collection = get_sast_results_by_scan_id(scan_id=scan_id, offset=offset, limit=limit)
+            page += 1
             sast_results.extend(sast_results_collection.get("results"))
-            number_of_whole_request -= 1
-        remainder = total_count % limit
-        if remainder > 0:
-            offset += 1
-            sast_results_collection = get_sast_results_by_scan_id(scan_id=scan_id, offset=offset, limit=limit)
-            sast_results.extend(sast_results_collection.get("results"))
-
     report_content = []
     for result in sast_results:
         link = f"{cxone_server}/results/{scan_id}/{project_id}/sast"
