@@ -1,3 +1,2 @@
-CheckmarxPythonSDK==1.0.2
-cryptography==3.1.1
+CheckmarxPythonSDK==1.0.9
 pygit2==1.16.0
