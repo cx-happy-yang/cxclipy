@@ -288,7 +288,7 @@ def create_zip_file_from_location_path(location_path_str: str, project_id: str,
 
 def cx_scan_from_local_zip_file(
         cxone_server: str, report_csv_path: str, preset: dict, project_id: str, branch: str, zip_file_path: str,
-        incremental: bool = False, scanners=None, scan_tags=None, sca_exploitable_path=False
+        incremental: bool = False, scanners=None, scan_tags=None, sca_exploitable_path=False, sca_last_sast_scan_time=2
 ):
     """
 
@@ -302,7 +302,8 @@ def cx_scan_from_local_zip_file(
         incremental (bool):
         scanners (list of str):
         scan_tags (dict, optional):
-        sca_exploitable_path (bool):::
+        sca_exploitable_path (bool):
+        sca_last_sast_scan_time (int):
 
     Returns:
         return scan id if scan finished, otherwise return None
@@ -341,7 +342,7 @@ def cx_scan_from_local_zip_file(
                 ScanConfig(
                     scan_type="sca", value={
                         "exploitablePath": "true" if sca_exploitable_path else "false",
-                        # "enableContainersScan": "false",
+                        "lastSastScanTime": f"{sca_last_sast_scan_time}",
                     }
                 )
             )
@@ -668,7 +669,8 @@ def run_scan_and_generate_reports():
     cx_scan_from_local_zip_file(
         cxone_server=cxone_server, report_csv_path=report_csv,
         preset=preset, project_id=project_id, branch=branch, zip_file_path=zip_file_path,
-        incremental=incremental, scanners=scanners, scan_tags=scan_tags, sca_exploitable_path=sca_exploitable_path
+        incremental=incremental, scanners=scanners, scan_tags=scan_tags, sca_exploitable_path=sca_exploitable_path,
+        sca_last_sast_scan_time=sca_last_sast_scan_time
     )
 
 
