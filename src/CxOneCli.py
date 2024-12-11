@@ -1,5 +1,5 @@
-from args import get_command_line_arguments
-from cx import (
+from src.args import get_command_line_arguments
+from src.cx import (
     get_or_create_groups,
     process_project,
     should_create_new_scan,
@@ -11,8 +11,8 @@ from cx import (
     check_sast_scan_type,
     check_scanners,
 )
-from zip import create_zip_file_from_location_path, delete_zip_file
-from git import get_git_commit_history
+from src.zip import create_zip_file_from_location_path, delete_zip_file
+from src.git import get_git_commit_history
 
 
 def run_scan_and_generate_reports():
