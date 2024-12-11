@@ -15,8 +15,8 @@ source ~/.secrets
 --exclude_files "*min.js" \
 --report_csv cx-report.csv \
 --full_scan_cycle 10  \
---scan_tag_key branch,date \
---scan_tag_value master,2024-10-23 \
+--scan_tag_key key1,key2 \
+--scan_tag_value value1,value2 \
 --parallel_scan_cancel true \
 --scan_commit_number 0 \
 --sca_exploitable_path true \
