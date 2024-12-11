@@ -1,4 +1,4 @@
-curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.2.6/CxOneCli
+curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.2.7/CxOneCli
 chmod +x ./CxOneCli
 source ~/.secrets
 ./CxOneCli scan \
@@ -11,7 +11,7 @@ source ~/.secrets
 --incremental false \
 --location_path /mnt/e/github.com/CSPF-Founder/JavaVulnerableLab \
 --project_name AlphaTeam/JavaVulnerableLab \
---branch master \
+--branch master-sca \
 --exclude_folders "test,integrationtest" \
 --exclude_files "*min.js" \
 --report_csv cx-report.csv \
@@ -21,4 +21,4 @@ source ~/.secrets
 --parallel_scan_cancel true \
 --scan_commit_number 0 \
 --sca_exploitable_path true \
---scanners sast,apisec
+--scanners sast,sca
