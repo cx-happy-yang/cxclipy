@@ -32,6 +32,7 @@ from CheckmarxPythonSDK.CxOne import (
     get_a_list_of_scans,
     get_a_scan_by_id,
     get_summary_for_many_scans,
+    define_parameters_in_the_input_list_for_a_specific_project,
 )
 from CheckmarxPythonSDK.CxOne.dto import (
     ProjectInput,
@@ -39,6 +40,7 @@ from CheckmarxPythonSDK.CxOne.dto import (
     Upload,
     Project,
     ScanConfig,
+    ScanParameter,
 )
 from pygit2 import Repository, GitError
 from pygit2.enums import SortMode
@@ -87,6 +89,9 @@ def parse_arguments():
     parser.add_argument('--sca_exploitable_path', default="false",
                         help="enable SCA exploitable path or not"
                         )
+    parser.add_argument('--sca_last_sast_scan_time', default=2,
+                        help="use sast scan from last n days, default to 2"
+                        )
     return parser.parse_known_args()[0]
 
 
@@ -113,6 +118,7 @@ def process_arguments(arguments):
     parallel_scan_cancel = False if arguments.parallel_scan_cancel.lower() == "false" else True
     scan_commit_number = int(arguments.scan_commit_number)
     sca_exploitable_path = False if arguments.sca_exploitable_path.lower() == "false" else True
+    sca_last_sast_scan_time = int(arguments.sca_last_sast_scan_time)
 
     logger.info(
         f"cxone_access_control_url: {cxone_access_control_url}\n"
@@ -136,11 +142,12 @@ def process_arguments(arguments):
         f"parallel_scan_cancel: {parallel_scan_cancel}\n"
         f"scan_commit_number: {scan_commit_number}\n"
         f"sca_exploitable_path: {sca_exploitable_path}\n"
+        f"sca_last_sast_scan_time: {sca_last_sast_scan_time}\n"
     )
     return (
         cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders, exclude_files,
         report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
-        parallel_scan_cancel, scan_commit_number, sca_exploitable_path
+        parallel_scan_cancel, scan_commit_number, sca_exploitable_path, sca_last_sast_scan_time
     )
 
 
@@ -532,7 +539,7 @@ def run_scan_and_generate_reports():
     (
         cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders, exclude_files,
         report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
-        parallel_scan_cancel, scan_commit_number, sca_exploitable_path
+        parallel_scan_cancel, scan_commit_number, sca_exploitable_path, sca_last_sast_scan_time
     ) = get_command_line_arguments()
     group_ids = get_or_create_groups(group_full_name, cxone_tenant_name)
     project_collection = get_a_list_of_projects(name=project_name)
@@ -547,7 +554,7 @@ def run_scan_and_generate_reports():
         project_id = project.id
         logger.info(f"new project name {project_name} with project_id: {project_id} created.")
     else:
-        project = project_collection.projects[0]
+        project = list(filter(lambda r: r.name == project_name, project_collection.projects))[0]
         project_id = project.id
         if not project.groups:
             project_input = ProjectInput(
@@ -562,6 +569,34 @@ def run_scan_and_generate_reports():
             update_a_project(project_id, project_input)
 
     logger.info(f"project id: {project_id}")
+    logger.info("start update project configuration")
+    scan_parameters = [
+        ScanParameter(
+            key="scan.config.sca.ExploitablePath",
+            name="exploitablePath",
+            category="sca",
+            origin_level="Project",
+            value="false",
+            value_type="Bool",
+            value_type_params=None,
+            allow_override=True
+        ),
+        ScanParameter(
+            key="scan.config.sca.LastSastScanTime",
+            name="lastSastScanTime",
+            category="sca",
+            origin_level="Project",
+            value=f"{sca_last_sast_scan_time}",
+            value_type="Number",
+            value_type_params=None,
+            allow_override=True
+        ),
+    ]
+    define_parameters_in_the_input_list_for_a_specific_project(
+        project_id=project_id,
+        scan_parameters=scan_parameters
+    )
+    logger.info("finish update project configuration")
     logger.info(f"creating zip file by zip the source code folder: {location_path}")
     zip_file_path = create_zip_file_from_location_path(
         location_path_str=location_path, project_id=project_id, exclude_folders_str=exclude_folders,
