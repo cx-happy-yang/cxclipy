@@ -2,3 +2,4 @@
 venv
 *.csv
 CxOneCli
+**/__pycache__

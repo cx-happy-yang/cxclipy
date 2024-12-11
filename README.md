@@ -28,7 +28,7 @@ The binary is only targeting for Ubuntu system.
 --scan_tag_value master,2024-10-23 \
 --parallel_scan_cancel true \
 --scan_commit_number 2 \
---sca_exploitable_path true \
+--sca_exploitable_path false \
 --scanners sast,apisec
 ```
  
