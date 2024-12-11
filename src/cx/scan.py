@@ -221,14 +221,14 @@ def check_scanners(
     """
     days = sca_last_sast_scan_time - 1
     yesterday_midnight = datetime.combine(datetime.today(), time.min) - timedelta(days=days)
-    all_scans_from_last_n_days = filter(
-        lambda r: datetime.strptime(r.created_at, time_stamp_format) > yesterday_midnight,
+    all_scans_from_last_n_days = list(filter(
+        lambda r: datetime.strptime(r.createdAt, time_stamp_format) > yesterday_midnight,
         scan_collection.scans
-    )
-    sast_scans_from_last_n_days = filter(
+    ))
+    sast_scans_from_last_n_days = list(filter(
         lambda r: "sast" in [status_detail.name for status_detail in r.statusDetails],
         all_scans_from_last_n_days
-    )
+    ))
     if "sca" in scanners and "sast" not in scanners and not sast_scans_from_last_n_days:
         logger.info(f"There are no sast scan from the last {sca_last_sast_scan_time} days, add sast scanner")
         scanners.append("sast")
