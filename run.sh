@@ -1,4 +1,4 @@
-curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.3.0/CxOneCli
+curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.3.1/CxOneCli
 chmod +x ./CxOneCli
 source ~/.secrets
 ./CxOneCli scan \

@@ -1,3 +1,5 @@
+from src.__version__ import __version__
+from src.log import logger
 from src.args import get_command_line_arguments
 from src.cx import (
     get_or_create_groups,
@@ -16,6 +18,8 @@ from src.git import get_git_commit_history
 
 
 def run_scan_and_generate_reports():
+    logger.info(f"CxOneCli version {__version__}")
+    logger.info("CxOne step start")
     (
         cxone_server, cxone_tenant_name, preset, sast_incremental, location_path, branch, exclude_folders,
         exclude_files,
@@ -91,6 +95,7 @@ def run_scan_and_generate_reports():
             scan_id=scan_id,
             report_file_path=report_csv
         )
+    logger.info("CxOne step end")
 
 
 if __name__ == '__main__':
