@@ -17,7 +17,7 @@ def process_project(
         group_ids: List[str],
         sca_last_sast_scan_time: int
 ) -> str:
-    project_collection = get_a_list_of_projects(name=project_name)
+    project_collection = get_a_list_of_projects(names=[project_name])
     if not project_collection.projects:
         logger.info("project does not exist. create project")
         project = create_a_project(
