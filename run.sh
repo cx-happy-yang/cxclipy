@@ -1,4 +1,4 @@
-curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.3.2/CxOneCli
+curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.3.3/CxOneCli
 chmod +x ./CxOneCli
 source ~/.secrets
 ./CxOneCli scan \
@@ -18,7 +18,7 @@ source ~/.secrets
 --scan_tag_key key1,key2 \
 --scan_tag_value value1,value2 \
 --parallel_scan_cancel true \
---scan_commit_number 0 \
+--scan_commit_number 1 \
 --sca_exploitable_path true \
 --branch master-sca \
 --scanners sca \
