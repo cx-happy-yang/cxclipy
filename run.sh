@@ -1,4 +1,4 @@
-curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.3.3/CxOneCli
+curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.3.4/CxOneCli
 chmod +x ./CxOneCli
 source ~/.secrets
 # run sca scan
@@ -9,7 +9,7 @@ source ~/.secrets
 --cxone_grant_type refresh_token \
 --cxone_refresh_token $CXONE_HAPPY_TOKEN \
 --preset "ASA Premium"  \
---incremental false \
+--incremental true \
 --location_path /mnt/e/github.com/CSPF-Founder/JavaVulnerableLab \
 --project_name AlphaTeam/JavaVulnerableLab \
 --exclude_folders "test,integrationtest" \
@@ -33,7 +33,7 @@ source ~/.secrets
 --cxone_grant_type refresh_token \
 --cxone_refresh_token $CXONE_HAPPY_TOKEN \
 --preset "ASA Premium"  \
---incremental false \
+--incremental true \
 --location_path /mnt/e/github.com/CSPF-Founder/JavaVulnerableLab \
 --project_name AlphaTeam/JavaVulnerableLab \
 --exclude_folders "test,integrationtest" \

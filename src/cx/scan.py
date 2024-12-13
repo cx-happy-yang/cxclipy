@@ -178,15 +178,15 @@ def check_sast_scan_type(
     Returns:
 
     """
-    incremental = False
+    result = True
     if sast_incremental:
         number_of_scans = scan_collection.filteredTotalCount
         remainder = number_of_scans % full_scan_cycle
         if remainder == 0:
             logger.info(f"Now this scan has reached a full scan cycle: {full_scan_cycle}, "
                         f"it is required to initiate a Full scan")
-            incremental = False
-    return incremental
+            result = False
+    return result
 
 
 def check_scanners(
