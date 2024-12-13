@@ -89,7 +89,7 @@ def create_zip_file_from_location_path(
         project_id: str,
         exclude_folders_str: bool = None,
         exclude_files_str: bool = None
-) -> tuple:
+) -> str:
     """
 
     Args:
@@ -133,18 +133,7 @@ def create_zip_file_from_location_path(
                 fn = os.path.join(base, file)
                 zip_file.write(fn, fn[root_len:])
     logger.info(f"ZIP file created: {file_path}")
-    sha_256_hash = calculate_sha_256_hash(file_path)
-    return file_path, sha_256_hash
-
-
-def calculate_sha_256_hash(file_path: str) -> str:
-    sha256_hash = hashlib.sha256()
-    with open(file_path, "rb") as f:
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-    value = sha256_hash.hexdigest()
-    logger.info(f"the zip file {file_path} SHA256 value: {value}")
-    return value
+    return file_path
 
 
 def delete_zip_file(zip_file_path: str):

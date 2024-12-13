@@ -24,19 +24,14 @@ time_stamp_format = "%Y-%m-%dT%H:%M:%S.%fZ"
 def should_create_new_scan(
         zip_file_path: str,
         scan_collection: ScansCollection,
-        sha_256_hash: str,
         scan_commit_number: int,
         git_commit_history: List[dict],
         parallel_scan_cancel: bool,
 ) -> bool:
     result = True
-    file_hash_list_from_tags = [scan.tags.get("SHA256") for scan in scan_collection.scans]
     scan_status_list = [scan.status.lower() for scan in scan_collection.scans]
     if not exists(zip_file_path):
         logger.error("[ERROR]: zip file not found. Abort scan.")
-        result = False
-    elif file_hash_list_from_tags and sha_256_hash in file_hash_list_from_tags:
-        logger.info(f"identical code detected with SHA256 file hash: {sha_256_hash}, Cancel this scan request")
         result = False
     elif scan_collection.scans and scan_commit_number > 1 and git_commit_history:
         last_scan_tags = scan_collection.scans[0].tags
@@ -61,7 +56,6 @@ def should_create_new_scan(
 
 
 def create_scan_tags(
-        sha_256_hash: str,
         sast_incremental: bool,
         preset: str,
         branch: str,
@@ -72,7 +66,6 @@ def create_scan_tags(
         scan_tag_value: List[str],
 ) -> dict:
     scan_tags = {
-        "SHA256": sha_256_hash,
         "sast_incremental": str(sast_incremental),
         "preset": preset,
         "branch": branch,
@@ -249,7 +242,6 @@ def cx_scan_from_local_zip_file(
         preset: str,
         project_id: str,
         branch: str,
-        sha_256_hash: str,
         upload_url: str,
         sast_incremental: bool = False,
         scanners: List[str] = None,
@@ -265,7 +257,6 @@ def cx_scan_from_local_zip_file(
         preset (str):
         project_id (str):
         branch (str):
-        sha_256_hash (str):
         upload_url (str):
         sast_incremental (bool):
         scanners (list of str):
@@ -286,7 +277,6 @@ def cx_scan_from_local_zip_file(
         sca_last_sast_scan_time=sca_last_sast_scan_time,
     )
     scan_tags = create_scan_tags(
-        sha_256_hash=sha_256_hash,
         sast_incremental=sast_incremental,
         preset=preset,
         branch=branch,

@@ -35,7 +35,7 @@ def run_scan_and_generate_reports():
         group_ids=group_ids,
         sca_last_sast_scan_time=sca_last_sast_scan_time
     )
-    zip_file_path, sha_256_hash = create_zip_file_from_location_path(
+    zip_file_path = create_zip_file_from_location_path(
         location_path_str=location_path,
         project_id=project_id,
         exclude_folders_str=exclude_folders,
@@ -52,7 +52,6 @@ def run_scan_and_generate_reports():
     if not should_create_new_scan(
             zip_file_path=zip_file_path,
             scan_collection=scan_collection,
-            sha_256_hash=sha_256_hash,
             scan_commit_number=scan_commit_number,
             git_commit_history=git_commit_history,
             parallel_scan_cancel=parallel_scan_cancel,
@@ -74,7 +73,6 @@ def run_scan_and_generate_reports():
         preset=preset,
         project_id=project_id,
         branch=branch,
-        sha_256_hash=sha_256_hash,
         upload_url=upload_url,
         sast_incremental=sast_incremental,
         scanners=scanners,
