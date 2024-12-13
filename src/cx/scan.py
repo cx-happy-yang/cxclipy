@@ -140,20 +140,13 @@ def create_scan_configs(
     return scan_configs
 
 
-def show_scan_statistics(scanners: List[str], scan_id: str):
-    def show_scanner_statistics(scanner: str, statistics: dict):
-        critical_list = [item for item in statistics if item.get("severity") == "CRITICAL"]
-        high_list = [item for item in statistics if item.get("severity") == "HIGH"]
-        medium_list = [item for item in statistics if item.get("severity") == "MEDIUM"]
-        low_list = [item for item in statistics if item.get("severity") == "LOW"]
-        scanner_result = {
-            "Critical": critical_list[0].get("counter") if critical_list else 0,
-            "High": high_list[0].get("counter") if high_list else 0,
-            "Medium": medium_list[0].get("counter") if medium_list else 0,
-            "Low": low_list[0].get("counter") if low_list else 0,
-        }
-        logger.info(f"{scanner} scan statistics: {scanner_result}")
+def show_scanner_statistics(scanner: str, statistics: List[dict]):
+    if not statistics:
+        return
+    logger.info(f"{scanner} scan statistics: {statistics}")
 
+
+def show_scan_statistics(scanners: List[str], scan_id: str):
     logger.info("get scan statistics results by scan id")
     result = get_summary_for_many_scans(scan_ids=[scan_id])
     scan_summaries = result.get("scansSummaries")
@@ -161,19 +154,19 @@ def show_scan_statistics(scanners: List[str], scan_id: str):
         return
     results_summary = scan_summaries[0]
     if "sast" in scanners:
-        sast_statistics = results_summary.sastCounters.get('severityStatusCounters')
+        sast_statistics = results_summary.sastCounters.get('severityCounters')
         show_scanner_statistics(scanner="sast", statistics=sast_statistics)
     if "sca" in scanners:
-        sca_statistics = results_summary.scaCounters.get('severityStatusCounters')
+        sca_statistics = results_summary.scaCounters.get('severityCounters')
         show_scanner_statistics(scanner="sca", statistics=sca_statistics)
     if "apisec" in scanners:
-        api_sec_statistics = results_summary.apiSecCounters.get('severityStatusCounters')
+        api_sec_statistics = results_summary.apiSecCounters.get('severityCounters')
         show_scanner_statistics(scanner="apisec", statistics=api_sec_statistics)
     if "kics" in scanners:
-        kics_statistics = results_summary.kicsCounters.get('severityStatusCounters')
+        kics_statistics = results_summary.kicsCounters.get('severityCounters')
         show_scanner_statistics(scanner="kics", statistics=kics_statistics)
     if "containers" in scanners:
-        container_statistics = results_summary.scaContainersCounters.get('severityStatusCounters')
+        container_statistics = results_summary.scaContainersCounters.get('severityVulnerabilitiesCounters')
         show_scanner_statistics(scanner="containers", statistics=container_statistics)
 
 
