@@ -1,5 +1,6 @@
 import os
-import hashlib
+from pathlib import Path
+import tempfile
 import pathlib
 from zipfile import ZipFile, ZIP_DEFLATED
 from src.log import logger
@@ -9,7 +10,7 @@ def group_str_by_wildcard_character(exclusions):
     """
 
     Args:
-        exclusions (str): commaseparated string
+        exclusions (str): comma separated string
         for example, "*.min.js,readme,*.txt,test*,*doc*"
 
     Returns:
@@ -110,9 +111,6 @@ def create_zip_file_from_location_path(
     if exclude_files_str is not None:
         exclude_files += ","
         exclude_files += exclude_files_str
-
-    from pathlib import Path
-    import tempfile
     temp_dir = tempfile.gettempdir()
     path = Path(location_path_str)
     if not path.exists():
