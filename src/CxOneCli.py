@@ -59,7 +59,7 @@ def run_scan_and_generate_reports():
             parallel_scan_cancel=parallel_scan_cancel,
     ):
         return
-    sast_incremental = check_sast_scan_type(
+    sast_scan_type = check_sast_scan_type(
         scan_collection=scan_collection,
         full_scan_cycle=full_scan_cycle,
         sast_incremental=sast_incremental,
@@ -69,6 +69,12 @@ def run_scan_and_generate_reports():
         scan_collection=scan_collection,
         sca_last_sast_scan_time=sca_last_sast_scan_time,
     )
+    if sast_scan_type == "full":
+        sast_incremental = False
+    elif sast_scan_type == "incremental":
+        sast_incremental = True
+    else:
+        sast_incremental = True
     scan_id = cx_scan_from_local_zip_file(
         preset=preset,
         project_id=project_id,

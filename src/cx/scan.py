@@ -168,9 +168,10 @@ def check_sast_scan_type(
         scan_collection: ScansCollection,
         full_scan_cycle: int,
         sast_incremental: bool,
-) -> bool:
+) -> str:
     """
-        if sast_incremental is True, return True, check if the number of scans reach a full cycle
+        if sast_incremental is False, return 'full',
+        otherwise check if the number of scans reach a full cycle, if it does, also return 'full'
     Args:
         scan_collection (ScansCollection):
         full_scan_cycle (int):
@@ -179,15 +180,15 @@ def check_sast_scan_type(
     Returns:
 
     """
-    result = True
-    if sast_incremental:
-        number_of_scans = scan_collection.filteredTotalCount + 1
-        remainder = number_of_scans % full_scan_cycle
-        if remainder == 0:
-            logger.info(f"Now this scan has reached a full scan cycle: {full_scan_cycle}, "
-                        f"it is required to initiate a Full scan")
-            result = False
-    return result
+    if not sast_incremental:
+        return "full"
+    number_of_scans = scan_collection.filteredTotalCount + 1
+    remainder = number_of_scans % full_scan_cycle
+    if remainder == 0:
+        logger.info(f"Now this scan has reached a full scan cycle: {full_scan_cycle}, "
+                    f"it is required to initiate a Full scan")
+        return "full"
+    return "incremental"
 
 
 def check_scanners(
