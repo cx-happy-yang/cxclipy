@@ -1,4 +1,4 @@
-curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.3.4/CxOneCli
+curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.3.5/CxOneCli
 chmod +x ./CxOneCli
 source ~/.secrets
 # run sca scan
