@@ -33,7 +33,7 @@ def should_create_new_scan(
     if not exists(zip_file_path):
         logger.error("[ERROR]: zip file not found. Abort scan.")
         result = False
-    elif scan_collection.scans and scan_commit_number > 1 and git_commit_history:
+    elif scan_collection.scans and scan_commit_number > 0 and git_commit_history:
         last_scan_tags = scan_collection.scans[0].tags
         commit_id = last_scan_tags.get("commit_id")
         commit_time = last_scan_tags.get("commit_time")
@@ -180,7 +180,7 @@ def check_sast_scan_type(
     """
     result = True
     if sast_incremental:
-        number_of_scans = scan_collection.filteredTotalCount
+        number_of_scans = scan_collection.filteredTotalCount + 1
         remainder = number_of_scans % full_scan_cycle
         if remainder == 0:
             logger.info(f"Now this scan has reached a full scan cycle: {full_scan_cycle}, "

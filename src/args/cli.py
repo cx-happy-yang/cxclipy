@@ -31,7 +31,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument('--scan_tag_key', help="tag key, multiple keys can use comma separated value")
     parser.add_argument('--scan_tag_value', help="tag value, multiple keys can use comma separated value")
     parser.add_argument('--parallel_scan_cancel', default="false", help="enable parallel scan cancel")
-    parser.add_argument('--scan_commit_number', default=1,
+    parser.add_argument('--scan_commit_number', default=0,
                         help="number of commit to trigger new scan. every commit to trigger new scan would flush CxOne"
                         )
     parser.add_argument('--sca_exploitable_path', default="false",

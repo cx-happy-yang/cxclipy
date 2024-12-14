@@ -44,7 +44,7 @@ def run_scan_and_generate_reports():
     git_commit_history = get_git_commit_history(location_path=location_path)
     scan_collection = get_a_list_of_scans(
         offset=0,
-        limit=1024,
+        limit=full_scan_cycle + 1,
         project_id=project_id,
         branch=branch,
         sort=["+created_at"]
