@@ -41,6 +41,8 @@ def run_scan_and_generate_reports():
         exclude_folders_str=exclude_folders,
         exclude_files_str=exclude_files
     )
+    upload_url = upload_zip_file(zip_file_path=zip_file_path)
+    delete_zip_file(zip_file_path=zip_file_path)
     git_commit_history = get_git_commit_history(location_path=location_path)
     scan_collection = get_a_list_of_scans(
         offset=0,
@@ -50,15 +52,13 @@ def run_scan_and_generate_reports():
         sort=["+created_at"]
     )
     if not should_create_new_scan(
-            zip_file_path=zip_file_path,
+            upload_url=upload_url,
             scan_collection=scan_collection,
             scan_commit_number=scan_commit_number,
             git_commit_history=git_commit_history,
             parallel_scan_cancel=parallel_scan_cancel,
     ):
         return
-    upload_url = upload_zip_file(zip_file_path=zip_file_path)
-    delete_zip_file(zip_file_path=zip_file_path)
     sast_incremental = check_sast_scan_type(
         scan_collection=scan_collection,
         full_scan_cycle=full_scan_cycle,

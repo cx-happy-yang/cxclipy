@@ -22,7 +22,7 @@ time_stamp_format = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 def should_create_new_scan(
-        zip_file_path: str,
+        upload_url: str,
         scan_collection: ScansCollection,
         scan_commit_number: int,
         git_commit_history: List[dict],
@@ -30,8 +30,8 @@ def should_create_new_scan(
 ) -> bool:
     result = True
     scan_status_list = [scan.status.lower() for scan in scan_collection.scans]
-    if not exists(zip_file_path):
-        logger.error("[ERROR]: zip file not found. Abort scan.")
+    if not upload_url:
+        logger.error("ERROR: zip file upload_url is None. Abort scan.")
         result = False
     elif scan_collection.scans and scan_commit_number > 0 and git_commit_history:
         last_scan_tags = scan_collection.scans[0].tags
@@ -222,19 +222,20 @@ def check_scanners(
 
 
 def upload_zip_file(zip_file_path: str) -> str:
-    logger.info("create a pre signed url to upload zip file")
-    upload_url = create_a_pre_signed_url_to_upload_files()
-    logger.debug(f"upload url created: {upload_url}")
-    logger.info("begin to upload zip file")
-
-    upload_source_code_successful = upload_zip_content_for_scanning(
-        upload_link=upload_url,
-        zip_file_path=zip_file_path,
-    )
-    if not upload_source_code_successful:
-        logger.error("[ERROR]: Failed to upload zip file. Abort scan.")
-        exit(1)
-    logger.info("finish upload zip file")
+    upload_url = None
+    if exists(zip_file_path):
+        logger.info("create a pre signed url to upload zip file")
+        upload_url = create_a_pre_signed_url_to_upload_files()
+        logger.debug(f"upload url created: {upload_url}")
+        logger.info("begin to upload zip file")
+        upload_source_code_successful = upload_zip_content_for_scanning(
+            upload_link=upload_url,
+            zip_file_path=zip_file_path,
+        )
+        if not upload_source_code_successful:
+            upload_url = None
+            logger.error("ERROR: Failed to upload zip file. Abort scan.")
+        logger.info("finish upload zip file")
     return upload_url
 
 
