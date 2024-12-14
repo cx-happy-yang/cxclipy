@@ -14,7 +14,7 @@ from CheckmarxPythonSDK.CxOne.dto import (
 
 def process_project(
         project_name: str,
-        group_ids: List[str],
+        group_id: str,
         sca_last_sast_scan_time: int
 ) -> str:
     project_collection = get_a_list_of_projects(names=[project_name])
@@ -23,7 +23,7 @@ def process_project(
         project = create_a_project(
             project_input=ProjectInput(
                 name=project_name,
-                groups=group_ids
+                groups=[group_id]
             )
         )
         project_id = project.id
@@ -31,7 +31,9 @@ def process_project(
     else:
         project = list(filter(lambda r: r.name == project_name, project_collection.projects))[0]
         project_id = project.id
-        if not project.groups:
+        group_ids = project.groups
+        if group_id not in group_ids:
+            group_ids.append(group_id)
             project_input = ProjectInput(
                 name=project.name,
                 groups=group_ids,

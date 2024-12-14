@@ -26,13 +26,13 @@ def run_scan_and_generate_reports():
         report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
         parallel_scan_cancel, scan_commit_number, sca_exploitable_path, sca_last_sast_scan_time
     ) = get_command_line_arguments()
-    group_ids = get_or_create_groups(
+    group_id = get_or_create_groups(
         group_full_name=group_full_name,
         cxone_tenant_name=cxone_tenant_name
     )
     project_id = process_project(
         project_name=project_name,
-        group_ids=group_ids,
+        group_id=group_id,
         sca_last_sast_scan_time=sca_last_sast_scan_time
     )
     zip_file_path = create_zip_file_from_location_path(
