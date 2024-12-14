@@ -34,20 +34,20 @@ def should_create_new_scan(
     if not scan_collection.scans:
         logger.info("There are no scans. Will create a new scan.")
         return True
-    if scan_commit_number > 0 and git_commit_history:
+    if scan_commit_number > 1 and git_commit_history:
         last_scan_tags = scan_collection.scans[0].tags
         commit_id = last_scan_tags.get("commit_id")
         if not commit_id:
             return True
         index_of_last_scan_commit_id_in_history = next((index for (index, d) in enumerate(git_commit_history)
                                                         if d["commit_id"] == commit_id), None)
-        if index_of_last_scan_commit_id_in_history < scan_commit_number:
+        if index_of_last_scan_commit_id_in_history + 1 < scan_commit_number:
             current_commit_id = git_commit_history[0].get("commit_id")
             logger.info(f"initiate scan by every {scan_commit_number} commits, "
                         f"last scan commit id: {commit_id}, "
                         f"current commit id: {current_commit_id}, "
-                        f"make {scan_commit_number - index_of_last_scan_commit_id_in_history} "
-                        f"more commit to initiate scan, Cancel this scan request")
+                        f"make {scan_commit_number - index_of_last_scan_commit_id_in_history - 1} "
+                        f"more commits to initiate scan, Cancel this scan request")
             return False
     if parallel_scan_cancel and "running" in [scan.status.lower() for scan in scan_collection.scans]:
         logger.info("There are running scans.")
