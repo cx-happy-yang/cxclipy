@@ -16,7 +16,7 @@ from CheckmarxPythonSDK.CxOne.dto import (
     ScanConfig,
     ScansCollection,
 )
-from os.path import exists
+from pathlib import Path
 
 time_stamp_format = "%Y-%m-%dT%H:%M:%S.%fZ"
 
@@ -28,31 +28,32 @@ def should_create_new_scan(
         git_commit_history: List[dict],
         parallel_scan_cancel: bool,
 ) -> bool:
-    result = True
-    scan_status_list = [scan.status.lower() for scan in scan_collection.scans]
     if not upload_url:
-        logger.error("ERROR: zip file upload_url is None. Abort scan.")
-        result = False
-    elif scan_collection.scans and scan_commit_number > 0 and git_commit_history:
+        logger.error("ERROR: zip file upload_url is empty. Abort scan.")
+        return False
+    if not scan_collection.scans:
+        logger.info("There are no scans. Will create a new scan.")
+        return True
+    if scan_commit_number > 0 and git_commit_history:
         last_scan_tags = scan_collection.scans[0].tags
         commit_id = last_scan_tags.get("commit_id")
-        commit_time = last_scan_tags.get("commit_time")
-        if commit_id and commit_time:
-            index_of_last_scan_commit_id_in_history = next((index for (index, d) in enumerate(git_commit_history)
-                                                            if d["commit_id"] == commit_id), None)
-            if index_of_last_scan_commit_id_in_history + 1 <= scan_commit_number:
-                current_commit_id = git_commit_history[0].get("commit_id")
-                logger.info(f"initiate scan by every {scan_commit_number} commits, "
-                            f"last scan commit id: {commit_id}, "
-                            f"current commit id: {current_commit_id}, "
-                            f"make {scan_commit_number - index_of_last_scan_commit_id_in_history} "
-                            f"more commit to initiate scan, Cancel this scan request")
-                result = False
-    elif parallel_scan_cancel and "running" in scan_status_list:
+        if not commit_id:
+            return True
+        index_of_last_scan_commit_id_in_history = next((index for (index, d) in enumerate(git_commit_history)
+                                                        if d["commit_id"] == commit_id), None)
+        if index_of_last_scan_commit_id_in_history < scan_commit_number:
+            current_commit_id = git_commit_history[0].get("commit_id")
+            logger.info(f"initiate scan by every {scan_commit_number} commits, "
+                        f"last scan commit id: {commit_id}, "
+                        f"current commit id: {current_commit_id}, "
+                        f"make {scan_commit_number - index_of_last_scan_commit_id_in_history} "
+                        f"more commit to initiate scan, Cancel this scan request")
+            return False
+    if parallel_scan_cancel and "running" in [scan.status.lower() for scan in scan_collection.scans]:
         logger.info("There are running scans.")
         logger.info("Parallel run controlled, Cancel this scan request")
-        result = False
-    return result
+        return False
+    return True
 
 
 def create_scan_tags(
@@ -222,20 +223,22 @@ def check_scanners(
 
 
 def upload_zip_file(zip_file_path: str) -> str:
-    upload_url = None
-    if exists(zip_file_path):
-        logger.info("create a pre signed url to upload zip file")
-        upload_url = create_a_pre_signed_url_to_upload_files()
-        logger.debug(f"upload url created: {upload_url}")
-        logger.info("begin to upload zip file")
-        upload_source_code_successful = upload_zip_content_for_scanning(
-            upload_link=upload_url,
-            zip_file_path=zip_file_path,
-        )
-        if not upload_source_code_successful:
-            upload_url = None
-            logger.error("ERROR: Failed to upload zip file. Abort scan.")
-        logger.info("finish upload zip file")
+    upload_url = ""
+    path = Path(zip_file_path)
+    if not path.exists():
+        return upload_url
+    logger.info("create a pre signed url to upload zip file")
+    upload_url = create_a_pre_signed_url_to_upload_files()
+    logger.debug(f"upload url created: {upload_url}")
+    logger.info("begin to upload zip file")
+    upload_source_code_successful = upload_zip_content_for_scanning(
+        upload_link=upload_url,
+        zip_file_path=zip_file_path,
+    )
+    if not upload_source_code_successful:
+        upload_url = ""
+        logger.error("ERROR: Failed to upload zip file. Abort scan.")
+    logger.info("finish upload zip file")
     return upload_url
 
 
