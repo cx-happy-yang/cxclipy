@@ -102,7 +102,6 @@ def create_zip_file_from_location_path(
     Returns:
         str (ZIP file path)
     """
-    logger.info(f"creating zip file by zip the source code folder: {location_path_str}")
     exclude_folders = ".*,bin,target,images,Lib,node_modules"
     exclude_files = "*.min.js"
     if exclude_folders_str is not None:
@@ -114,10 +113,12 @@ def create_zip_file_from_location_path(
     temp_dir = tempfile.gettempdir()
     path = Path(location_path_str)
     if not path.exists():
-        raise FileExistsError(f"{location_path_str} does not exist, abort scan")
+        logger.error(f"{location_path_str} does not exist")
+        return ""
     absolute_path_str = str(os.path.normpath(path.absolute()))
     add_java_file(absolute_path_str)
     file_path = f"{temp_dir}/{project_id}.zip"
+    logger.info(f"creating zip file by zip the source code folder: {location_path_str}")
     with ZipFile(file_path, "w", ZIP_DEFLATED) as zip_file:
         root_len = len(absolute_path_str) + 1
         for base, dirs, files in os.walk(absolute_path_str):
