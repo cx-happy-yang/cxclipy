@@ -23,15 +23,16 @@ The requirements are as follows:
 2. create groups if they were not exist
 3. create project or get existing project, and update the project configuration
 4. create zip file, apply exclusions
-5. read last 100 git commit history
-6. get last few scans of current branch
-7. check if the new scan should be created
-8. upload zip file
-9. check sast scan type should be a full scan or not based on number of scans exist
-10. for a sca scan, check if a sast scan should be included to reuse the last n days Exploitable Path results
-11. create scan, wait for finish
-12. display scan statistics
-13. generate sast csv report if there is sast scanner defined.
+5. upload zip file
+6. delete zip file
+7. read last 100 git commit history
+8. get last few scans of current branch
+9. check if the new scan should be created
+10. check sast scan type should be a full scan or not based on number of scans exist
+11. for a sca scan, check if a sast scan should be included to reuse the last n days Exploitable Path results
+12. create scan, wait for finish
+13. display scan statistics 
+14. generate sast csv report if there is sast scanner defined.
 
 ## details on requirements
 
