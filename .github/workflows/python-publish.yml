@@ -30,7 +30,7 @@ jobs:
           which upx
       - name: Build binary
         run: |
-          pyinstaller --clean --noconfirm --onefile --nowindow --distpath dist/ --workpath /tmp --upx-dir /usr/bin/ src/CxOneCli.py
+          pyinstaller --clean --noconfirm --onefile --nowindow --distpath dist/ --workpath /tmp src/CxOneCli.py
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
