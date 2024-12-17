@@ -9,37 +9,29 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [ ubuntu-latest ]
+  deploy:
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Check-out repository
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v2
         with:
           python-version: '3.x'
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
-
-      - name: Build Executable
-        uses: Nuitka/Nuitka-Action@main
-        with:
-          nuitka-version: main
-          script-name: CxOneCli.py
-          mode: app
-          output-dir: dist
-          output-file: CxOneCli
-
+          pip install pyinstaller
+          pip install --upgrade pyinstaller
+          pip install pyinstaller-versionfile
+      - name: Build binary
+        run: |
+          pyinstaller --clean --noconfirm --onefile --nowindow --distpath dist/ --workpath /tmp CxOneCli.py
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
         run: >-
-          gh release create --generate-notes --title "Version ${{ github.ref_name }}" ${{ github.ref_name }} ${{ github.workspace }}/dist/CxOneCli
+          gh release create ${{ github.ref_name }} ${{ github.workspace }}/dist/* --generate-notes --title "Version ${{ github.ref_name }}"
