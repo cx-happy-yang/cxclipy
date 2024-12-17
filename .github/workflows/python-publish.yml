@@ -12,7 +12,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest ]
+        os: [ ubuntu-latest ]
 
     runs-on: ${{ matrix.os }}
 
@@ -24,9 +24,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-          cache: 'pip'
-          cache-dependency-path: |
-            **/requirements*.txt
 
       - name: Install dependencies
         run: |
@@ -40,8 +37,8 @@ jobs:
           mode: app
           output-dir: dist
 
-      - name: ${{ runner.os }} Build
+      - name: ${{ runner.os }} Release
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
         run: >-
-          gh release create ${{ github.ref_name }} ${{ github.workspace }}/dist/* --generate-notes --title "Version ${{ github.ref_name }}"
+          gh release create --generate-notes --title "Version ${{ github.ref_name }}" ${{ github.ref_name }} ${{ github.workspace }}/dist/*.bin
