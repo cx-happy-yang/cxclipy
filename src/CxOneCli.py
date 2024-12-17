@@ -42,7 +42,6 @@ def run_scan_and_generate_reports():
         exclude_files_str=exclude_files
     )
     upload_url = upload_zip_file(zip_file_path=zip_file_path)
-    delete_zip_file(zip_file_path=zip_file_path)
     git_commit_history = get_git_commit_history(location_path=location_path)
     scan_collection = get_a_list_of_scans(
         offset=0,
@@ -99,6 +98,7 @@ def run_scan_and_generate_reports():
             scan_id=scan_id,
             report_file_path=report_csv
         )
+    delete_zip_file(zip_file_path=zip_file_path)
     logger.info("CxOne step end")
 
 
