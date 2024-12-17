@@ -36,8 +36,9 @@ jobs:
           script-name: CxOneCli.py
           mode: app
           output-dir: dist
+          output-file: CxOneCli
 
-      - name: ${{ runner.os }} Release
+      - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
         run: >-
