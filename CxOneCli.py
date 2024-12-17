@@ -1,4 +1,4 @@
-from src.__version__ import __version__
+from __version__ import __version__
 from src.log import logger
 from src.args import get_command_line_arguments
 from src.cx import (
