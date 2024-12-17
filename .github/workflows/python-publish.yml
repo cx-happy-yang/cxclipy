@@ -28,6 +28,7 @@ jobs:
           pip install --upgrade pyinstaller
           pip install pyinstaller-versionfile
           curl -L https://github.com/upx/upx/releases/download/v4.2.4/upx-4.2.4-amd64_linux.tar.xz | tar xJf - -C /tmp
+          mv /tmp/upx-4.2.4-amd64_linux /tmp/upx
       - name: Build binary
         run: |
           pyinstaller --clean --noconfirm --onefile --nowindow --distpath dist/ --workpath /tmp --upx-dir /tmp src/CxOneCli.py
