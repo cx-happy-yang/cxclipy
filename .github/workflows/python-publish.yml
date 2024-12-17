@@ -42,4 +42,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
         run: >-
-          gh release create --generate-notes --title "Version ${{ github.ref_name }}" ${{ github.ref_name }} ${{ github.workspace }}/dist/*
+          gh release create --generate-notes --title "Version ${{ github.ref_name }}" ${{ github.ref_name }} ${{ github.workspace }}/dist/CxOneCli
