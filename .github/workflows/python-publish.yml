@@ -27,7 +27,7 @@ jobs:
           pip install pyinstaller
           pip install --upgrade pyinstaller
           pip install pyinstaller-versionfile
-          sudo apt install upx -y
+          which upx
       - name: Build binary
         run: |
           pyinstaller --clean --noconfirm --onefile --nowindow --distpath dist/ --workpath /tmp --upx-dir /usr/bin/ src/CxOneCli.py
