@@ -193,6 +193,7 @@ def check_sast_scan_type(
 
 def check_scanners(
         scanners: List[str],
+        sca_exploitable_path: bool,
         scan_collection: ScansCollection,
         sca_last_sast_scan_time: int,
 ) -> List[str]:
@@ -201,6 +202,7 @@ def check_scanners(
         add the sast scanner
     Args:
         scanners (list of str):
+        sca_exploitable_path (bool):
         scan_collection (ScansCollection):
         sca_last_sast_scan_time (int):
 
@@ -217,7 +219,7 @@ def check_scanners(
         lambda r: "sast" in [status_detail.name for status_detail in r.statusDetails],
         all_scans_from_last_n_days
     ))
-    if "sca" in scanners and "sast" not in scanners and not sast_scans_from_last_n_days:
+    if "sca" in scanners and sca_exploitable_path and "sast" not in scanners and not sast_scans_from_last_n_days:
         logger.info(f"There are no sast scan from the last {sca_last_sast_scan_time} days, add sast scanner")
         scanners.append("sast")
     return scanners

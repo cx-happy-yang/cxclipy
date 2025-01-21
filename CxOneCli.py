@@ -65,6 +65,7 @@ def run_scan_and_generate_reports():
     )
     scanners = check_scanners(
         scanners=scanners,
+        sca_exploitable_path=sca_exploitable_path,
         scan_collection=scan_collection,
         sca_last_sast_scan_time=sca_last_sast_scan_time,
     )
