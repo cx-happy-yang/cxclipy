@@ -13,7 +13,7 @@ from src.cx import (
     check_sast_scan_type,
     check_scanners,
 )
-from src.zip import create_zip_file_from_location_path, delete_zip_file
+from src.zip import create_zip_file_from_location_path, delete_zip_file, list_file_stats, list_zip_file_content
 from src.git import get_git_commit_history
 
 
@@ -41,6 +41,7 @@ def run_scan_and_generate_reports():
         exclude_folders_str=exclude_folders,
         exclude_files_str=exclude_files
     )
+    list_file_stats(zip_file_path)
     upload_url = upload_zip_file(zip_file_path=zip_file_path)
     git_commit_history = get_git_commit_history(location_path=location_path)
     scan_collection = get_a_list_of_scans(
@@ -75,7 +76,7 @@ def run_scan_and_generate_reports():
         sast_incremental = True
     else:
         sast_incremental = True
-    scan_id = cx_scan_from_local_zip_file(
+    scan_id, scan_status = cx_scan_from_local_zip_file(
         preset=preset,
         project_id=project_id,
         branch=branch,
@@ -88,6 +89,9 @@ def run_scan_and_generate_reports():
         scan_tag_key=scan_tag_key,
         scan_tag_value=scan_tag_value,
     )
+    if scan_status == 'Failed':
+        logger.info("scan failed, will list all contents in zip file")
+        list_zip_file_content(zip_file_path)
     show_scan_statistics(
         scanners=scanners,
         scan_id=scan_id

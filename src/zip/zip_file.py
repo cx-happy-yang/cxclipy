@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from pathlib import Path
 import tempfile
 import pathlib
@@ -139,3 +140,29 @@ def delete_zip_file(zip_file_path: str):
     logger.info(f"start deleting zip file: {zip_file_path}")
     pathlib.Path(zip_file_path).unlink()
     logger.info(f"Finish deleting zip file: {zip_file_path}")
+
+
+def list_file_stats(zip_file_path: str):
+    file_stats = os.stat(zip_file_path)
+    file_size = file_stats.st_size
+    last_modified = file_stats.st_mtime
+    creation_time = file_stats.st_ctime
+    last_modified_str = datetime.fromtimestamp(last_modified).strftime("%Y-%m-%d %H:%M:%S")
+    creation_time_str = datetime.fromtimestamp(creation_time).strftime("%Y-%m-%d %H:%M:%S")
+    logger.info(
+        f"zip file stats: "
+        f"File Size: {file_size} bytes "
+        f"Last Modified: {last_modified_str} "
+        f"Creation Time: {creation_time_str} "
+    )
+
+
+def list_zip_file_content(zip_file_path: str):
+    logger.info(f"contents of the zip file {zip_file_path} will be the following:")
+    with ZipFile(zip_file_path) as myzip:
+        for file in myzip.infolist():
+            logger.info(
+                f"is_dir: {file.is_dir()},filename: {file.filename},file_size: {file.file_size},compress_size: "
+                f"{file.compress_size},compress_type: {file.compress_type}"
+            )
+

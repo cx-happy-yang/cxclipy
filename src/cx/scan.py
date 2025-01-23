@@ -1,6 +1,7 @@
 from time import sleep
 from datetime import datetime, time, timedelta
 from src.log import logger
+from src.zip import list_zip_file_content
 from typing import List
 from CheckmarxPythonSDK.CxOne import (
     create_a_pre_signed_url_to_upload_files,
@@ -257,7 +258,7 @@ def cx_scan_from_local_zip_file(
         git_commit_history: List[dict] = None,
         scan_tag_key: List[str] = None,
         scan_tag_value: List[str] = None,
-) -> str:
+) -> tuple:
     """
 
     Args:
@@ -313,6 +314,6 @@ def cx_scan_from_local_zip_file(
         if scan_status in ["Completed", "Partial"]:
             break
         elif scan_status in ["Failed", "Canceled"]:
-            return scan_id
+            return scan_id, scan_status
         sleep(60)
-    return scan_id
+    return scan_id, scan_status
