@@ -89,8 +89,9 @@ def add_java_file(location_path):
 def create_zip_file_from_location_path(
         location_path_str: str,
         project_id: str,
-        exclude_folders_str: bool = None,
-        exclude_files_str: bool = None
+        exclude_folders_str: str = None,
+        exclude_files_str: str = None,
+        include_dot_git_folder: bool = None,
 ) -> str:
     """
 
@@ -99,6 +100,7 @@ def create_zip_file_from_location_path(
         project_id (str):
         exclude_folders_str (str): comma separated string
         exclude_files_str (str): comma separated string
+        include_dot_git_folder (bool):
 
     Returns:
         str (ZIP file path)
@@ -124,7 +126,11 @@ def create_zip_file_from_location_path(
         root_len = len(absolute_path_str) + 1
         for base, dirs, files in os.walk(absolute_path_str):
             path_folders = base.split(os.sep)
-            if any([should_be_excluded(exclude_folders, folder) for folder in path_folders]):
+            evaluate_dot_git_folder = True
+            if include_dot_git_folder:
+                evaluate_dot_git_folder = ".git" not in path_folders
+            if evaluate_dot_git_folder and any(
+                    [should_be_excluded(exclude_folders, folder) for folder in path_folders]):
                 continue
             for file in files:
                 file_lower_case = file.lower()

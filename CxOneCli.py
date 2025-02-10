@@ -22,7 +22,7 @@ def run_scan_and_generate_reports():
     logger.info("CxOne step start")
     (
         cxone_server, cxone_tenant_name, preset, sast_incremental, location_path, branch, exclude_folders,
-        exclude_files,
+        include_dot_git_folder, exclude_files,
         report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
         parallel_scan_cancel, scan_commit_number, sca_exploitable_path, sca_last_sast_scan_time
     ) = get_command_line_arguments()
@@ -39,7 +39,8 @@ def run_scan_and_generate_reports():
         location_path_str=location_path,
         project_id=project_id,
         exclude_folders_str=exclude_folders,
-        exclude_files_str=exclude_files
+        exclude_files_str=exclude_files,
+        include_dot_git_folder=include_dot_git_folder,
     )
     list_file_stats(zip_file_path)
     upload_url = upload_zip_file(zip_file_path=zip_file_path)

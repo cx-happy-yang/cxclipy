@@ -22,6 +22,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument('--scanners', default="sast,sca,kics,apisec,containers,microengines",
                         help="scanners: sast,sca,kics,apisec,containers,microengines")
     parser.add_argument('--exclude_folders', help="exclude folders")
+    parser.add_argument('--include_dot_git_folder',  default="false", help="include .git folder or not")
     parser.add_argument('--exclude_files', help='exclude files')
     parser.add_argument('--report_csv', default=None, help="csv report file path")
     parser.add_argument('--full_scan_cycle', default=10,
@@ -54,6 +55,7 @@ def process_arguments(arguments: Namespace) -> tuple:
     location_path = arguments.location_path
     branch = arguments.branch
     exclude_folders = arguments.exclude_folders
+    include_dot_git_folder = False if arguments.include_dot_git_folder == "false" else True
     exclude_files = arguments.exclude_files
     report_csv = arguments.report_csv
     full_scan_cycle = int(arguments.full_scan_cycle)
@@ -79,6 +81,7 @@ def process_arguments(arguments: Namespace) -> tuple:
         f"location_path: {location_path}\n"
         f"branch: {branch}\n"
         f"exclude_folders: {exclude_folders}\n"
+        f"include_dot_git_folder: {include_dot_git_folder}\n"
         f"exclude_files: {exclude_files}\n"
         f"report_csv: {report_csv}\n"
         f"full_scan_cycle: {full_scan_cycle}\n"
@@ -93,7 +96,8 @@ def process_arguments(arguments: Namespace) -> tuple:
         f"sca_last_sast_scan_time: {sca_last_sast_scan_time}\n"
     )
     return (
-        cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders, exclude_files,
+        cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders,
+        include_dot_git_folder, exclude_files,
         report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
         parallel_scan_cancel, scan_commit_number, sca_exploitable_path, sca_last_sast_scan_time
     )
