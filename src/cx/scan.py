@@ -131,7 +131,7 @@ def create_scan_configs(
             )
         else:
             scan_configs.append(ScanConfig(scan_type=scanner, value={}))
-    logger.info(f"scan_configs: {[scan_config.as_dict() for scan_config in scan_configs]}")
+    logger.info(f"scan_configs: {[scan_config.to_dict() for scan_config in scan_configs]}")
     return scan_configs
 
 
