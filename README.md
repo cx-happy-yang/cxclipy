@@ -29,7 +29,8 @@ The binary is only targeting for Ubuntu system.
 --parallel_scan_cancel true \
 --scan_commit_number 2 \
 --sca_exploitable_path false \
---scanners sast,apisec
+--scanners sast,apisec \
+--include_dot_git_folder true
 ```
  
 

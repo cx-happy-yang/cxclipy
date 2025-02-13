@@ -22,7 +22,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument('--scanners', default="sast,sca,kics,apisec,containers,microengines",
                         help="scanners: sast,sca,kics,apisec,containers,microengines")
     parser.add_argument('--exclude_folders', help="exclude folders")
-    parser.add_argument('--include_dot_git_folder',  default="false", help="include .git folder or not")
+    parser.add_argument('--include_dot_git_folder',  default="true", help="include .git folder or not")
     parser.add_argument('--exclude_files', help='exclude files')
     parser.add_argument('--report_csv', default=None, help="csv report file path")
     parser.add_argument('--full_scan_cycle', default=10,

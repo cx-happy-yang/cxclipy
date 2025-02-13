@@ -1,4 +1,4 @@
-curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.3.9/CxOneCli
+curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.4.2/CxOneCli
 chmod +x ./CxOneCli
 source ~/.secrets
 # run sca scan
@@ -23,7 +23,8 @@ source ~/.secrets
 --sca_exploitable_path true \
 --branch master-sca \
 --scanners sca \
---sca_last_sast_scan_time 2
+--sca_last_sast_scan_time 2 \
+--include_dot_git_folder true
 
 # run other scans
 ./CxOneCli scan \
@@ -47,4 +48,5 @@ source ~/.secrets
 --sca_exploitable_path true \
 --branch master \
 --scanners sast,apisec,kics,containers,microengines \
---sca_last_sast_scan_time 2
+--sca_last_sast_scan_time 2 \
+--include_dot_git_folder true
