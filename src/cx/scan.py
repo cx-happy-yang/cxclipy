@@ -50,8 +50,9 @@ def should_create_new_scan(
                         f"make {scan_commit_number - index_of_last_scan_commit_id_in_history - 1} "
                         f"more commits to initiate scan, Cancel this scan request")
             return False
-    if parallel_scan_cancel and "running" in [scan.status.lower() for scan in scan_collection.scans]:
-        logger.info("There are running scans.")
+    scan_status_list = [scan.status.lower() for scan in scan_collection.scans]
+    if parallel_scan_cancel and ("running" in scan_status_list or "queued" in scan_status_list):
+        logger.info("There are running scans or queued scans for the same branch of current project.")
         logger.info("Parallel run controlled, Cancel this scan request")
         return False
     return True
