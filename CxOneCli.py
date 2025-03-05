@@ -50,7 +50,7 @@ def run_scan_and_generate_reports():
         limit=full_scan_cycle + 1,
         project_id=project_id,
         branch=branch,
-        sort=["+created_at"]
+        sort=["-created_at"]
     )
     if not should_create_new_scan(
             upload_url=upload_url,
