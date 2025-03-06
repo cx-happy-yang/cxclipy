@@ -7,6 +7,27 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from src.log import logger
 
 
+def get_cx_supported_file_extensions():
+    return ['.ac', '.am', '.apexp', '.app', '.apxc', '.asax', '.ascx', '.asp', '.aspx', '.bas', '.c', '.c++', '.cbl',
+            '.cc', '.cfg', '.cgi', '.cls', '.cmake', '.cmp', '.cob', '.component', '.conf', '.config',
+            '.configurations', '.cpp', '.cpy', '.cs', '.cshtml', '.csproj', '.csv', '.ctl', '.ctp', '.cxx', '.dart',
+            '.dspf', '.dsr', '.ec', '.eco', '.env', '.env_cxsca-container-build-args', '.erb', '.evt', '.frm', '.ftl',
+            '.go', '.gradle', '.groovy', '.gsh', '.gsp', '.gtl', '.gvy', '.gy', '.h', '.h++', '.handlebars', '.hbs',
+            '.hh', '.hpp', '.htm', '.html', '.hxx', '.inc', '.ini', '.jade', '.java', '.js', '.jsf', '.json', '.jsp',
+            '.jspdsbld', '.jspf', '.jsx', '.kt', '.kts', '.latex', '.lock', '.lua', '.m', '.master', '.mf', '.mod',
+            '.mustache', '.npmrc', '.object', '.page', '.pc', '.pck', '.pco', '.ph', '.php', '.php3', '.php4', '.php5',
+            '.phtm', '.phtml', '.pkb', '.pkh', '.pks', '.pl', '.plist', '.pls', '.plx', '.pm', '.private', '.pro',
+            '.properties', '.psgi', '.pug', '.py', '.rb', '.report', '.resolved', '.rhtml', '.rjs', '.rpg', '.rpg38',
+            '.rpgle', '.rs', '.rxml', '.sbt', '.scala', '.snapshot', '.sqb', '.sql', '.sqlrpg', '.sqlrpgle', '.sum',
+            '.swift', '.tag', '.target', '.testtarget', '.tex', '.tgr', '.tld', '.toml', '.tpl', '.trigger', '.ts',
+            '.tsx', '.twig', '.txt', '.vb', '.vbp', '.vbproj', '.vbs', '.vm', '.vue', '.wod', '.workflow', '.xaml',
+            '.xhtml', '.xib', '.xml', '.xsaccess', '.xsapp', '.xsjs', '.xsjslib', '.yaml', '.yarnrc', '.yml']
+
+
+def get_cx_supported_file_without_extensions():
+    return ["dockerfile", "cartfile", "podfile", "gemfile", "cpanfile"]
+
+
 def group_str_by_wildcard_character(exclusions):
     """
 
@@ -114,6 +135,8 @@ def create_zip_file_from_location_path(
         exclude_files += ","
         exclude_files += exclude_files_str
     temp_dir = tempfile.gettempdir()
+    extensions = get_cx_supported_file_extensions()
+    file_without_extensions = get_cx_supported_file_without_extensions()
     path = Path(location_path_str)
     if not path.exists():
         logger.error(f"{location_path_str} does not exist")
@@ -133,8 +156,12 @@ def create_zip_file_from_location_path(
                     [should_be_excluded(exclude_folders, folder) for folder in path_folders]):
                 continue
             for file in files:
-                file_lower_case = file.lower()
-                if should_be_excluded(exclude_files, file_lower_case):
+                file_name = file.lower()
+                if "." not in file_name and file_name not in file_without_extensions:
+                    continue
+                if "." in file_name and not file_name.endswith(tuple(extensions)):
+                    continue
+                if should_be_excluded(exclude_files, file_name):
                     continue
                 fn = os.path.join(base, file)
                 zip_file.write(fn, fn[root_len:])
