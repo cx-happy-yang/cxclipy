@@ -17,15 +17,17 @@ def get_cx_supported_file_extensions():
             '.jspdsbld', '.jspf', '.jsx', '.kt', '.kts', '.latex', '.lock', '.lua', '.m', '.master', '.mf', '.mod',
             '.mustache', '.npmrc', '.object', '.page', '.pc', '.pck', '.pco', '.ph', '.php', '.php3', '.php4', '.php5',
             '.phtm', '.phtml', '.pkb', '.pkh', '.pks', '.pl', '.plist', '.pls', '.plx', '.pm', '.private', '.pro',
-            '.properties', '.psgi', '.pug', '.py', '.rb', '.report', '.resolved', '.rhtml', '.rjs', '.rpg', '.rpg38',
-            '.rpgle', '.rs', '.rxml', '.sbt', '.scala', '.snapshot', '.sqb', '.sql', '.sqlrpg', '.sqlrpgle', '.sum',
+            '.properties', '.psgi', '.pug', '.py', '.rb', '.report', '.resolved', '.rev', '.rhtml', '.rjs', '.rpg',
+            '.rpg38',
+            '.rpgle', '.rs', '.rxml',  '.sbt', '.scala', '.snapshot', '.sqb', '.sql', '.sqlrpg', '.sqlrpgle', '.sum',
             '.swift', '.tag', '.target', '.testtarget', '.tex', '.tgr', '.tld', '.toml', '.tpl', '.trigger', '.ts',
             '.tsx', '.twig', '.txt', '.vb', '.vbp', '.vbproj', '.vbs', '.vm', '.vue', '.wod', '.workflow', '.xaml',
             '.xhtml', '.xib', '.xml', '.xsaccess', '.xsapp', '.xsjs', '.xsjslib', '.yaml', '.yarnrc', '.yml']
 
 
 def get_cx_supported_file_without_extensions():
-    return ["dockerfile", "cartfile", "podfile", "gemfile", "cpanfile"]
+    return ["dockerfile", "cartfile", "podfile", "gemfile", "cpanfile", "exclude", "head", "master", "main",
+            "commit_editmsg", "config", "description", "index", "packed-refs"]
 
 
 def group_str_by_wildcard_character(exclusions):
