@@ -32,5 +32,3 @@ The binary is only targeting for Ubuntu system.
 --scanners sast,apisec \
 --include_dot_git_folder true
 ```
- 
-
