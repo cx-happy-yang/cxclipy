@@ -59,6 +59,7 @@ def process_arguments(arguments: Namespace) -> tuple:
     exclude_files = arguments.exclude_files
     report_csv = arguments.report_csv
     full_scan_cycle = int(arguments.full_scan_cycle)
+    logger.info(f"scanners from args: {arguments.scanners}")
     scanners = [scanner for scanner in arguments.scanners.split(",")]
     scan_tag_key = [key for key in arguments.scan_tag_key.split(",")] if arguments.scan_tag_key else None
     scan_tag_value = [value for value in arguments.scan_tag_value.split(",")] if arguments.scan_tag_value else None
