@@ -53,6 +53,7 @@ def run_scan_and_generate_reports():
         sort=["-created_at"]
     )
     if not should_create_new_scan(
+            branch=branch,
             upload_url=upload_url,
             scan_collection=scan_collection,
             scan_commit_number=scan_commit_number,

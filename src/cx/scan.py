@@ -23,6 +23,7 @@ time_stamp_format = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 def should_create_new_scan(
+        branch: str,
         upload_url: str,
         scan_collection: ScansCollection,
         scan_commit_number: int,
@@ -41,7 +42,7 @@ def should_create_new_scan(
         commit_id_from_scan_tag = last_scan_tags.get("commit_id")
         if not commit_id_from_scan_tag:
             return True
-        if current_commit_id == commit_id_from_scan_tag:
+        if not branch.endswith("-sca") and current_commit_id == commit_id_from_scan_tag:
             logger.info(f"last scan commit id: {commit_id_from_scan_tag}, "
                         f"current commit id: {current_commit_id}, "
                         f"scan is duplicate, cancel this request.")
