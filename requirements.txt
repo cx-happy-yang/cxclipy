@@ -1,2 +1,2 @@
-CheckmarxPythonSDK==1.2.0
+CheckmarxPythonSDK==1.2.2
 pygit2==1.16.0
