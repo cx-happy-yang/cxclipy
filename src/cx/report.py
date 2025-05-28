@@ -24,7 +24,9 @@ def generate_sast_report(
     offset = 0
     limit = 100
     page = 1
-    sast_results_collection = get_sast_results_by_scan_id(scan_id=scan_id, offset=offset, limit=limit)
+    sast_results_collection = get_sast_results_by_scan_id(
+        scan_id=scan_id, offset=offset, limit=limit,sort=["+status", "+severity","-queryname"]
+    )
     total_count = int(sast_results_collection.get("totalCount"))
     sast_results = sast_results_collection.get("results")
     if total_count > limit:
@@ -32,7 +34,9 @@ def generate_sast_report(
             offset = page * limit
             if offset >= total_count:
                 break
-            sast_results_collection = get_sast_results_by_scan_id(scan_id=scan_id, offset=offset, limit=limit)
+            sast_results_collection = get_sast_results_by_scan_id(
+                scan_id=scan_id, offset=offset, limit=limit, sort=["+status", "+severity","-queryname"]
+            )
             page += 1
             sast_results.extend(sast_results_collection.get("results"))
     report_content = []
