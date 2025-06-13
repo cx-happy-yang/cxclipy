@@ -46,6 +46,7 @@ jobs:
       - name: Build binary
         run: |
           pyinstaller --clean --noconfirm --onefile --nowindow --distpath dist/ --workpath /tmp CxOneCli.py
+          git config --global --add safe.directory /__w/cxclipy/cxclipy
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
