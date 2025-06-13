@@ -21,7 +21,7 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           apt-get update
-          apt-get install -y unzip curl git autoconf build-essential ca-certificates tzdata
+          apt-get install -y unzip curl git autoconf build-essential ca-certificates tzdata gh
       - name: check glibc version
         run: ldd --version
       - uses: actions/checkout@v3
