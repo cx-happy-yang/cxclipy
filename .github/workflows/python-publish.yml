@@ -22,6 +22,8 @@ jobs:
         run: |
           apt-get update
           apt-get install -y unzip curl git autoconf build-essential ca-certificates tzdata
+      - name: check glibc version
+        run: ldd --version
       - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v2
