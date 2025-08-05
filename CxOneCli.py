@@ -13,7 +13,7 @@ from src.cx import (
     check_sast_scan_type,
     check_scanners,
 )
-from src.zip import create_zip_file_from_location_path, delete_zip_file, list_file_stats, list_zip_file_content
+from src.zip import create_zip_file_from_location_path, delete_zip_file, list_zip_file_content
 # from src.git import get_git_commit_history
 
 
@@ -42,7 +42,6 @@ def run_scan_and_generate_reports():
         exclude_files_str=exclude_files,
         include_dot_git_folder=include_dot_git_folder,
     )
-    list_file_stats(zip_file_path)
     upload_url = upload_zip_file(zip_file_path=zip_file_path)
     # git_commit_history = get_git_commit_history(location_path=location_path)
     git_commit_history = []

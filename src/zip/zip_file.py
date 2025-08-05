@@ -96,8 +96,9 @@ def should_be_excluded(exclusions, target):
     return result
 
 
-def add_java_file(location_path):
-    file_name = location_path + "/HelloWorld.java"
+def add_java_file():
+    temp_dir = tempfile.gettempdir()
+    file_name = temp_dir + "/HelloWorld.java"
     with open(file=file_name, mode="w") as file:
         file.write(
             """class HelloWorld {
@@ -107,6 +108,7 @@ def add_java_file(location_path):
 }
             """
         )
+    return file_name
 
 
 def create_zip_file_from_location_path(
@@ -144,35 +146,44 @@ def create_zip_file_from_location_path(
         logger.error(f"{location_path_str} does not exist")
         return ""
     absolute_path_str = str(os.path.normpath(path.absolute()))
-    add_java_file(absolute_path_str)
     file_path = f"{temp_dir}/{project_id}.zip"
-    logger.info(f"creating zip file by zip the source code folder: {location_path_str}")
-    with ZipFile(file_path, "w", ZIP_DEFLATED) as zip_file:
-        root_len = len(absolute_path_str) + 1
-        for base, dirs, files in os.walk(absolute_path_str):
-            path_folders = base.split(os.sep)
-            evaluate_dot_git_folder = True
-            if include_dot_git_folder:
-                evaluate_dot_git_folder = ".git" not in path_folders
-            if evaluate_dot_git_folder and any(
-                    [should_be_excluded(exclude_folders, folder) for folder in path_folders]):
-                continue
-            for file in files:
-                file_name = file.lower()
-                if "." not in file_name and file_name not in file_without_extensions:
+    try:
+        tmp_java_file = add_java_file()
+        delete_zip_file(file_path)
+        logger.info(f"creating zip file by zip the source code folder: {location_path_str}")
+        with ZipFile(file_path, "w", ZIP_DEFLATED) as zip_file:
+            root_len = len(absolute_path_str) + 1
+            for base, dirs, files in os.walk(absolute_path_str):
+                path_folders = base.split(os.sep)
+                evaluate_dot_git_folder = True
+                if include_dot_git_folder:
+                    evaluate_dot_git_folder = ".git" not in path_folders
+                if evaluate_dot_git_folder and any(
+                        [should_be_excluded(exclude_folders, folder) for folder in path_folders]):
                     continue
-                if "." in file_name and not file_name.endswith(tuple(extensions)):
-                    continue
-                if should_be_excluded(exclude_files, file_name):
-                    continue
-                fn = os.path.join(base, file)
-                zip_file.write(fn, fn[root_len:])
+                for file in files:
+                    file_name = file.lower()
+                    if "." not in file_name and file_name not in file_without_extensions:
+                        continue
+                    if "." in file_name and not file_name.endswith(tuple(extensions)):
+                        continue
+                    if should_be_excluded(exclude_files, file_name):
+                        continue
+                    fn = os.path.join(base, file)
+                    zip_file.write(fn, fn[root_len:])
+            zip_file.write(tmp_java_file, "HelloWorld.java")
+        list_file_stats(file_path)
+    except (FileExistsError, FileNotFoundError, PermissionError, OSError, IOError) as e:
+        logger.error(f"Failed to create zip file: {file_path}. Error message: {e}")
     logger.info(f"ZIP file created: {file_path}")
     return file_path
 
 
 def delete_zip_file(zip_file_path: str):
     logger.info(f"start deleting zip file: {zip_file_path}")
+    path = Path(zip_file_path)
+    if not path.exists():
+        return
     pathlib.Path(zip_file_path).unlink()
     logger.info(f"Finish deleting zip file: {zip_file_path}")
 
