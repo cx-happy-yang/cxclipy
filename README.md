@@ -3,8 +3,13 @@
 ## download the binary
 Go to [releases page](https://github.com/HappyY19/cxclipy/releases), and download the latest version binary CxOneCli
 
-## notice
-The binary is only targeting for Ubuntu system.
+## Prerequisites
+- supported os: Ubuntu
+- file system access permissions:
+  - read permission on the source code directory
+  - write permission on /tmp
+- network: connect to cxone via https
+- cxone application user: admin role
 
 ## how to run it
 ```commandline
