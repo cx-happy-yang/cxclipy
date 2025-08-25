@@ -19,8 +19,6 @@ from CheckmarxPythonSDK.CxOne.dto import (
 )
 from pathlib import Path
 
-time_stamp_format = "%Y-%m-%dT%H:%M:%S.%fZ"
-
 
 def should_create_new_scan(
         branch: str,
@@ -220,8 +218,9 @@ def check_scanners(
     """
     days = sca_last_sast_scan_time - 1
     yesterday_midnight = datetime.combine(datetime.today(), time.min) - timedelta(days=days)
+
     all_scans_from_last_n_days = list(filter(
-        lambda r: datetime.strptime(r.createdAt, time_stamp_format) > yesterday_midnight,
+        lambda r: datetime.strptime(r.createdAt.split("T")[0], '%Y-%m-%d') > yesterday_midnight,
         scan_collection.scans
     ))
     sast_scans_from_last_n_days = list(filter(
