@@ -247,8 +247,8 @@ def upload_zip_file(zip_file_path: str) -> str:
         zip_file_path=zip_file_path,
     )
     if not upload_source_code_successful:
-        upload_url = ""
         logger.error("ERROR: Failed to upload zip file. Abort scan.")
+        return ""
     logger.info("finish upload zip file")
     return upload_url
 
