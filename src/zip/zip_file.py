@@ -1,10 +1,12 @@
 import os
+import csv
 from datetime import datetime
 from pathlib import Path
 import tempfile
 import pathlib
 from zipfile import ZipFile, ZIP_DEFLATED
 from src.log import logger
+from src.git.git_info import get_git_commit_info
 
 
 def get_cx_supported_file_extensions():
@@ -96,7 +98,7 @@ def should_be_excluded(exclusions, target):
     return result
 
 
-def add_java_file():
+def add_java_file() -> str:
     temp_dir = tempfile.gettempdir()
     file_name = temp_dir + "/HelloWorld.java"
     with open(file=file_name, mode="w") as file:
@@ -108,6 +110,18 @@ def add_java_file():
 }
             """
         )
+    return file_name
+
+
+def add_contributors_csv(location_path: str) -> str:
+    temp_dir = tempfile.gettempdir()
+    file_name = temp_dir + "/contributors.csv"
+    commits = get_git_commit_info(location_path)
+    with open(file=file_name, mode="w", newline='') as csvfile:
+        fieldnames = ['commit_date', 'commit_hash', "email", "username"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        for commit in commits:
+            writer.writerow(commit)
     return file_name
 
 
@@ -149,6 +163,7 @@ def create_zip_file_from_location_path(
     file_path = f"{temp_dir}/{project_id}.zip"
     try:
         tmp_java_file = add_java_file()
+        tmp_contributors_csv_file = add_contributors_csv(location_path=location_path_str)
         delete_zip_file(file_path)
         logger.info(f"creating zip file by zip the source code folder: {location_path_str}")
         with ZipFile(file_path, "w", ZIP_DEFLATED) as zip_file:
@@ -172,6 +187,7 @@ def create_zip_file_from_location_path(
                     fn = os.path.join(base, file)
                     zip_file.write(fn, fn[root_len:])
             zip_file.write(tmp_java_file, "HelloWorld.java")
+            zip_file.write(tmp_contributors_csv_file, ".checkmarx/contributors.csv")
         list_file_stats(file_path)
     except (FileExistsError, FileNotFoundError, PermissionError, OSError, IOError) as e:
         logger.error(f"Failed to create zip file: {file_path}. Error message: {e}")

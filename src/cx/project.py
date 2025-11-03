@@ -26,11 +26,11 @@ def process_project(
                 groups=[group_id]
             )
         )
-        project_id = project.project_id
+        project_id = project.id
         logger.info(f"new project name {project_name} with project_id: {project_id} created.")
     else:
         project = list(filter(lambda r: r.name == project_name, project_collection.projects))[0]
-        project_id = project.project_id
+        project_id = project.id
         group_ids = project.groups
         if group_id not in group_ids:
             group_ids.append(group_id)

@@ -111,7 +111,7 @@ def create_scan_configs(
         if scanner == "sast":
             scan_configs.append(
                 ScanConfig(
-                    scan_type="sast", value={
+                    type="sast", value={
                         "incremental": "true" if sast_incremental else "false",
                         "presetName": preset
                     }
@@ -120,7 +120,7 @@ def create_scan_configs(
         elif scanner == "sca":
             scan_configs.append(
                 ScanConfig(
-                    scan_type="sca", value={
+                    type="sca", value={
                         "exploitablePath": "true" if sca_exploitable_path else "false",
                         "lastSastScanTime": f"{sca_last_sast_scan_time}",
                     }
@@ -129,14 +129,14 @@ def create_scan_configs(
         elif scanner == "microengines":
             scan_configs.append(
                 ScanConfig(
-                    scan_type="microengines", value={
+                    type="microengines", value={
                         "scorecard": "true",
                         "2ms": "true",
                     }
                 )
             )
         else:
-            scan_configs.append(ScanConfig(scan_type=scanner, value={}))
+            scan_configs.append(ScanConfig(type=scanner, value={}))
     logger.info(f"scan_configs: {[scan_config.to_dict() for scan_config in scan_configs]}")
     return scan_configs
 
@@ -155,19 +155,19 @@ def show_scan_statistics(scanners: List[str], scan_id: str):
         return
     results_summary = scan_summaries[0]
     if "sast" in scanners:
-        sast_statistics = results_summary.sastCounters.get('severityCounters')
+        sast_statistics = results_summary.sast_counters.get('severityCounters')
         show_scanner_statistics(scanner="sast", statistics=sast_statistics)
     if "sca" in scanners:
-        sca_statistics = results_summary.scaCounters.get('severityCounters')
+        sca_statistics = results_summary.sca_counters.get('severityCounters')
         show_scanner_statistics(scanner="sca", statistics=sca_statistics)
     if "apisec" in scanners:
-        api_sec_statistics = results_summary.apiSecCounters.get('severityCounters')
+        api_sec_statistics = results_summary.api_sec_counters.get('severityCounters')
         show_scanner_statistics(scanner="apisec", statistics=api_sec_statistics)
     if "kics" in scanners:
-        kics_statistics = results_summary.kicsCounters.get('severityCounters')
+        kics_statistics = results_summary.kics_counters.get('severityCounters')
         show_scanner_statistics(scanner="kics", statistics=kics_statistics)
     if "containers" in scanners:
-        container_statistics = results_summary.scaContainersCounters.get('severityVulnerabilitiesCounters')
+        container_statistics = results_summary.sca_containers_counters.get('severityVulnerabilitiesCounters')
         show_scanner_statistics(scanner="containers", statistics=container_statistics)
 
 
@@ -189,7 +189,7 @@ def check_sast_scan_type(
     """
     if not sast_incremental:
         return "full"
-    number_of_scans = scan_collection.filteredTotalCount + 1
+    number_of_scans = scan_collection.filtered_total_count + 1
     remainder = number_of_scans % full_scan_cycle
     if remainder == 0:
         logger.info(f"Now this scan has reached a full scan cycle: {full_scan_cycle}, "
@@ -220,11 +220,11 @@ def check_scanners(
     yesterday_midnight = datetime.combine(datetime.today(), time.min) - timedelta(days=days)
 
     all_scans_from_last_n_days = list(filter(
-        lambda r: datetime.strptime(r.createdAt.split("T")[0], '%Y-%m-%d') > yesterday_midnight,
+        lambda r: datetime.strptime(r.created_at.split("T")[0], '%Y-%m-%d') > yesterday_midnight,
         scan_collection.scans
     ))
     sast_scans_from_last_n_days = list(filter(
-        lambda r: "sast" in [status_detail.name for status_detail in r.statusDetails],
+        lambda r: "sast" in [status_detail.name for status_detail in r.status_details],
         all_scans_from_last_n_days
     ))
     if "sca" in scanners and sca_exploitable_path and "sast" not in scanners and not sast_scans_from_last_n_days:
@@ -302,9 +302,9 @@ def cx_scan_from_local_zip_file(
         scan_tag_value=scan_tag_value
     )
     scan_input = ScanInput(
-        scan_type="upload",
+        type="upload",
         handler=Upload(upload_url=upload_url, branch=branch),
-        project=Project(project_id=project_id),
+        project=Project(id=project_id),
         configs=scan_configs,
         tags=scan_tags,
     )
