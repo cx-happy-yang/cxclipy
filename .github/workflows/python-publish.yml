@@ -46,6 +46,7 @@ jobs:
           pip install pyinstaller --no-cache-dir
           pip install --upgrade pyinstaller --no-cache-dir
           pip install pyinstaller-versionfile --no-cache-dir
+        shell: bash
       - name: Build binary
         run: |
           pyinstaller --clean --noconfirm --onefile --nowindow --distpath dist/ --workpath /tmp CxOneCli.py
