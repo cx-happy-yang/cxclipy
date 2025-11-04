@@ -46,6 +46,8 @@ jobs:
           pip install pyinstaller --no-cache-dir
           pip install --upgrade pyinstaller --no-cache-dir
           pip install pyinstaller-versionfile --no-cache-dir
+          pip list
+          which pyinstaller
         shell: bash
       - name: Build binary
         run: |
