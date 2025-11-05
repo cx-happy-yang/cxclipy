@@ -51,7 +51,7 @@ jobs:
         shell: bash
       - name: Build binary
         run: |
-          CERT_PATH=$(python -c "import certifi; print(certifi.where())") && /__w/cxclipy/cxclipy/myenv/bin/pyinstaller --clean --noconfirm --onefile --nowindow --distpath dist/ --workpath /tmp --add-data "$CERT_PATH:certifi" CxOneCli.py
+          CERT_PATH=$(/__w/cxclipy/cxclipy/myenv/bin/python -c "import certifi; print(certifi.where())") && /__w/cxclipy/cxclipy/myenv/bin/pyinstaller --clean --noconfirm --onefile --nowindow --distpath dist/ --workpath /tmp --add-data "$CERT_PATH:certifi" CxOneCli.py
           git config --global --add safe.directory /__w/cxclipy/cxclipy
       - name: Release
         env:
