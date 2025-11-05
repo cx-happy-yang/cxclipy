@@ -1,2 +1,2 @@
-CheckmarxPythonSDK==1.5.9
+CheckmarxPythonSDK==1.6.0
 GitPython==3.1.45
