@@ -6,7 +6,7 @@ import tempfile
 import pathlib
 from zipfile import ZipFile, ZIP_DEFLATED
 from src.log import logger
-from src.git.git_info import get_git_commit_info
+from src.git import get_git_commit_info
 
 
 def get_cx_supported_file_extensions():
