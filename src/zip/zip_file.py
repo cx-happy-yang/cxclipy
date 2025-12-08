@@ -134,6 +134,7 @@ def add_contributors_csv(location_path: str) -> str:
                 break
     return file_name
 
+
 def create_zip_file_from_location_path(
         location_path_str: str,
         project_id: str,
