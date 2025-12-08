@@ -130,8 +130,10 @@ def add_contributors_csv(location_path: str) -> str:
             csvfile.flush()
             current_size = os.path.getsize(file_name)
             if current_size >= MAX_CSV_SIZE:
-                print(f"CSV is more than 1MB threshold, stop writing. current size: {current_size/1024:.2f}KB")
+                logger.info(f"CSV is more than 1MB threshold, stop writing. current size: {current_size/1024:.2f}KB")
                 break
+    current_size = os.path.getsize(file_name)
+    logger.info(f"contributors.csv file size: {current_size}")
     return file_name
 
 
