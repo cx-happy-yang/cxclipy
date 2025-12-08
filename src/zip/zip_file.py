@@ -7,6 +7,7 @@ import pathlib
 from zipfile import ZipFile, ZIP_DEFLATED
 from src.log import logger
 from src.commit import get_git_commit_info
+from typing import List
 
 
 # 定义1MB的字节阈值（1024*1024）
@@ -116,7 +117,10 @@ def add_java_file() -> str:
     return file_name
 
 
-def add_contributors_csv(location_path: str) -> str:
+def add_contributors_csv(
+        location_path: str,
+        contributors_ignore_list: List[str],
+    ) -> str:
     temp_dir = tempfile.gettempdir()
     file_name = os.path.join(temp_dir, "contributors.csv")
     
@@ -126,6 +130,8 @@ def add_contributors_csv(location_path: str) -> str:
         fieldnames = ['commit_date', 'commit_hash', "email", "username"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)    
         for commit in commits:
+            if commit.get("username") in contributors_ignore_list:
+                continue
             writer.writerow(commit)
             csvfile.flush()
             current_size = os.path.getsize(file_name)
@@ -143,6 +149,7 @@ def create_zip_file_from_location_path(
         exclude_folders_str: str = None,
         exclude_files_str: str = None,
         include_dot_git_folder: bool = None,
+        contributors_ignore_list: List[str] = None
 ) -> str:
     """
 
@@ -175,7 +182,10 @@ def create_zip_file_from_location_path(
     file_path = f"{temp_dir}/{project_id}.zip"
     try:
         tmp_java_file = add_java_file()
-        tmp_contributors_csv_file = add_contributors_csv(location_path=location_path_str)
+        tmp_contributors_csv_file = add_contributors_csv(
+            location_path=location_path_str, 
+            contributors_ignore_list=contributors_ignore_list,
+        )
         delete_zip_file(file_path)
         logger.info(f"creating zip file by zip the source code folder: {location_path_str}")
         with ZipFile(file_path, "w", ZIP_DEFLATED) as zip_file:

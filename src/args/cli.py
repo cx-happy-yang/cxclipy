@@ -41,6 +41,9 @@ def parse_arguments() -> Namespace:
     parser.add_argument('--sca_last_sast_scan_time', default=2,
                         help="use sast scan from last n days, default to 2"
                         )
+    parser.add_argument('--contributors_ignore_list', default="",
+                        help="comma separated names, to ignore when creating contributors.csv"
+                        )
     return parser.parse_known_args()[0]
 
 
@@ -70,7 +73,7 @@ def process_arguments(arguments: Namespace) -> tuple:
     scan_commit_number = int(arguments.scan_commit_number)
     sca_exploitable_path = False if arguments.sca_exploitable_path.lower() == "false" else True
     sca_last_sast_scan_time = int(arguments.sca_last_sast_scan_time)
-
+    contributors_ignore_list = arguments.contributors_ignore_list.split(",")
     logger.info(
         f"cxone_access_control_url: {cxone_access_control_url}\n"
         f"cxone_server: {cxone_server}\n"
@@ -95,12 +98,14 @@ def process_arguments(arguments: Namespace) -> tuple:
         f"scan_commit_number: {scan_commit_number}\n"
         f"sca_exploitable_path: {sca_exploitable_path}\n"
         f"sca_last_sast_scan_time: {sca_last_sast_scan_time}\n"
+        f"contributors_ignore_list: {contributors_ignore_list}\n"
     )
     return (
         cxone_server, cxone_tenant_name, preset, incremental, location_path, branch, exclude_folders,
         include_dot_git_folder, exclude_files,
         report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
-        parallel_scan_cancel, scan_commit_number, sca_exploitable_path, sca_last_sast_scan_time
+        parallel_scan_cancel, scan_commit_number, sca_exploitable_path, sca_last_sast_scan_time,
+        contributors_ignore_list
     )
 
 

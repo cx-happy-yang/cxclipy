@@ -24,7 +24,8 @@ def run_scan_and_generate_reports():
         cxone_server, cxone_tenant_name, preset, sast_incremental, location_path, branch, exclude_folders,
         include_dot_git_folder, exclude_files,
         report_csv, full_scan_cycle, scanners, scan_tag_key, scan_tag_value, project_name, group_full_name,
-        parallel_scan_cancel, scan_commit_number, sca_exploitable_path, sca_last_sast_scan_time
+        parallel_scan_cancel, scan_commit_number, sca_exploitable_path, sca_last_sast_scan_time,
+        contributors_ignore_list
     ) = get_command_line_arguments()
     group_id = get_or_create_groups(
         group_full_name=group_full_name,
@@ -41,6 +42,7 @@ def run_scan_and_generate_reports():
         exclude_folders_str=exclude_folders,
         exclude_files_str=exclude_files,
         include_dot_git_folder=include_dot_git_folder,
+        contributors_ignore_list=contributors_ignore_list,
     )
     upload_url = upload_zip_file(zip_file_path=zip_file_path)
     # git_commit_history = get_git_commit_history(location_path=location_path)
