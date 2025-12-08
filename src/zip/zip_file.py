@@ -9,6 +9,9 @@ from src.log import logger
 from src.commit import get_git_commit_info
 
 
+# 定义1MB的字节阈值（1024*1024）
+MAX_CSV_SIZE = 1024 * 1024
+
 def get_cx_supported_file_extensions():
     return ['.ac', '.am', '.apexp', '.app', '.apxc', '.asax', '.ascx', '.asp', '.aspx', '.bas', '.c', '.c++', '.cbl',
             '.cc', '.cfg', '.cgi', '.cls', '.cmake', '.cmp', '.cob', '.component', '.conf', '.config',
@@ -115,15 +118,21 @@ def add_java_file() -> str:
 
 def add_contributors_csv(location_path: str) -> str:
     temp_dir = tempfile.gettempdir()
-    file_name = temp_dir + "/contributors.csv"
+    file_name = os.path.join(temp_dir, "contributors.csv")
+    
     commits = get_git_commit_info(location_path)
-    with open(file=file_name, mode="w", newline='') as csvfile:
+    
+    with open(file=file_name, mode="w", newline='', encoding='utf-8') as csvfile:
         fieldnames = ['commit_date', 'commit_hash', "email", "username"]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)    
         for commit in commits:
             writer.writerow(commit)
+            csvfile.flush()
+            current_size = os.path.getsize(file_name)
+            if current_size >= MAX_CSV_SIZE:
+                print(f"CSV is more than 1MB threshold, stop writing. current size: {current_size/1024:.2f}KB")
+                break
     return file_name
-
 
 def create_zip_file_from_location_path(
         location_path_str: str,
