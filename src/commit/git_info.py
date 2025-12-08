@@ -1,5 +1,5 @@
 from git import Repo
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone  # 新增导入timezone
 from typing import List
 
 
@@ -22,15 +22,18 @@ def get_git_commit_info(repo_path: str) -> List[dict]:
         # 检查仓库有效性
         if repo.bare:
             raise Exception(f"Repository {repo_path} is a bare repo and cannot be operated on")
-        ninety_days_ago = datetime.now() - timedelta(days=90)
+        
+        # 关键修复：生成UTC时区的90天前时间（offset-aware）
+        # datetime.now(timezone.utc) 获取当前UTC时间（带时区），再减90天
+        ninety_days_ago = datetime.now(timezone.utc) - timedelta(days=90)
         commit_info_list = []
 
         # 遍历所有commit（默认按时间倒序，最新的先遍历）
         for commit in repo.iter_commits():
-            # 获取commit的提交时间（带UTC时区）
+            # 获取commit的提交时间（Git默认返回UTC时区的offset-aware对象）
             commit_datetime = commit.committed_datetime
 
-            # 过滤：只保留90天内的commit
+            # 过滤：只保留90天内的commit（此时两者都是UTC的offset-aware对象，可安全比较）
             if commit_datetime >= ninety_days_ago:
                 commit_info = {
                     "commit_hash": commit.hexsha,  # 完整哈希，如需短哈希可改为 commit.hexsha[:7]
