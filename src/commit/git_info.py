@@ -1,45 +1,50 @@
 from git import Repo
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 
 
-def get_git_commit_info(repo_path) -> List[dict]:
+def get_git_commit_info(repo_path: str) -> List[dict]:
     """
-    Retrieve the date and email of all commits in a Git repository
+    Retrieve the date, email, username and hash of commits in the last 90 days
 
     Parameters:
         repo_path: Local path to the Git repository (e.g., ./my_repo)
 
     Returns:
         A list where each element is a dictionary:
-        {'commit_hash': hash value, 'commit_date': commit date, 'email': committer email}
+        {'commit_hash': 完整哈希值, 'commit_date': ISO格式提交时间, 
+         'email': 提交者邮箱, 'username': 作者名称}
     """
     try:
-        # Open the Git repository
+        # 打开Git仓库
         repo = Repo(repo_path)
 
-        # Check if the repository is valid
+        # 检查仓库有效性
         if repo.bare:
             raise Exception(f"Repository {repo_path} is a bare repo and cannot be operated on")
 
+        # 计算90天前的UTC时间（与commit的时间时区保持一致）
+        ninety_days_ago = datetime.now(datetime.timezone.utc) - timedelta(days=90)
         commit_info_list = []
-        # Iterate through all commits (in reverse chronological order, latest first)
+
+        # 遍历所有commit（默认按时间倒序，最新的先遍历）
         for commit in repo.iter_commits():
-            # Commit hash (short hash)
-            commit_hash = commit.hexsha
-            # Commit date (committer date, i.e., the time when the commit was finally pushed to the repository)
-            # Note: commit.author.date is the time when the author wrote the code, which may differ from the commit time
-            commit_date = commit.committed_datetime.isoformat()
-            # Committer's email
-            # If you need the author's email, use commit.author.email
-            email = commit.committer.email
-            username = commit.author.name
-            commit_info_list.append({
-                "commit_date": commit_date,
-                "commit_hash": commit_hash,
-                "email": email,
-                "username": username,
-            })
+            # 获取commit的提交时间（带UTC时区）
+            commit_datetime = commit.committed_datetime
+
+            # 过滤：只保留90天内的commit
+            if commit_datetime >= ninety_days_ago:
+                commit_info = {
+                    "commit_hash": commit.hexsha,  # 完整哈希，如需短哈希可改为 commit.hexsha[:7]
+                    "commit_date": commit_datetime.isoformat(),
+                    "email": commit.committer.email,
+                    "username": commit.author.name
+                }
+                commit_info_list.append(commit_info)
+            else:
+                # 由于commit是倒序遍历，一旦超出90天可直接终止循环（优化性能）
+                break
+
         return commit_info_list
 
     except Exception as e:
