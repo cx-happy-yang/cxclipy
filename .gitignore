@@ -4,3 +4,4 @@ venv
 CxOneCli
 __pycache__/
 *.pyc
+.venv

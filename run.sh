@@ -1,4 +1,4 @@
-curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.6.5/CxOneCli
+curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.6.6/CxOneCli
 chmod +x ./CxOneCli
 source ~/.secrets
 # run sca scan
@@ -8,6 +8,7 @@ source ~/.secrets
 --cxone_tenant_name happy  \
 --cxone_grant_type refresh_token \
 --cxone_refresh_token $CXONE_HAPPY_TOKEN \
+python CxOneCli.py scan \
 --preset "ASA Premium"  \
 --incremental true \
 --location_path /mnt/e/github.com/CSPF-Founder/JavaVulnerableLab \
@@ -24,7 +25,8 @@ source ~/.secrets
 --branch master \
 --scanners sast \
 --sca_last_sast_scan_time 2 \
---include_dot_git_folder true
+--include_dot_git_folder true \
+----contributors_ignore_list 30431255+cx-happy-yang@users.noreply.github.com
 
 # run other scans
 ./CxOneCli scan \
