@@ -22,9 +22,7 @@ def get_git_commit_info(repo_path: str) -> List[dict]:
         # 检查仓库有效性
         if repo.bare:
             raise Exception(f"Repository {repo_path} is a bare repo and cannot be operated on")
-
-        # 计算90天前的UTC时间（与commit的时间时区保持一致）
-        ninety_days_ago = datetime.now(datetime.timezone.utc) - timedelta(days=90)
+        ninety_days_ago = datetime.now() - timedelta(days=90)
         commit_info_list = []
 
         # 遍历所有commit（默认按时间倒序，最新的先遍历）
