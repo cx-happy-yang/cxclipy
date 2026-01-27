@@ -1,4 +1,4 @@
-curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.6.6/CxOneCli
+curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.6.7/CxOneCli
 chmod +x ./CxOneCli
 source ~/.secrets
 # run sca scan
@@ -26,29 +26,29 @@ python CxOneCli.py scan \
 --scanners sast \
 --sca_last_sast_scan_time 2 \
 --include_dot_git_folder true \
-----contributors_ignore_list 30431255+cx-happy-yang@users.noreply.github.com
+# ----contributors_ignore_list 30431255+cx-happy-yang@users.noreply.github.com
 
 # run other scans
-./CxOneCli scan \
---cxone_access_control_url https://sng.iam.checkmarx.net \
---cxone_server https://sng.ast.checkmarx.net \
---cxone_tenant_name happy  \
---cxone_grant_type refresh_token \
---cxone_refresh_token $CXONE_HAPPY_TOKEN \
---preset "ASA Premium"  \
---incremental true \
---location_path /mnt/e/github.com/CSPF-Founder/JavaVulnerableLab \
---project_name AlphaTeam/JavaVulnerableLab \
---exclude_folders "test,integrationtest" \
---exclude_files "*min.js" \
---report_csv cx-report.csv \
---full_scan_cycle 10  \
---scan_tag_key key1,key2 \
---scan_tag_value value1,value2 \
---parallel_scan_cancel true \
---scan_commit_number 1 \
---sca_exploitable_path true \
---branch master \
---scanners sast,apisec,kics,containers,microengines \
---sca_last_sast_scan_time 2 \
---include_dot_git_folder true
+# ./CxOneCli scan \
+# --cxone_access_control_url https://sng.iam.checkmarx.net \
+# --cxone_server https://sng.ast.checkmarx.net \
+# --cxone_tenant_name happy  \
+# --cxone_grant_type refresh_token \
+# --cxone_refresh_token $CXONE_HAPPY_TOKEN \
+# --preset "ASA Premium"  \
+# --incremental true \
+# --location_path /mnt/e/github.com/CSPF-Founder/JavaVulnerableLab \
+# --project_name AlphaTeam/JavaVulnerableLab \
+# --exclude_folders "test,integrationtest" \
+# --exclude_files "*min.js" \
+# --report_csv cx-report.csv \
+# --full_scan_cycle 10  \
+# --scan_tag_key key1,key2 \
+# --scan_tag_value value1,value2 \
+# --parallel_scan_cancel true \
+# --scan_commit_number 1 \
+# --sca_exploitable_path true \
+# --branch master \
+# --scanners sast,apisec,kics,containers,microengines \
+# --sca_last_sast_scan_time 2 \
+# --include_dot_git_folder true
