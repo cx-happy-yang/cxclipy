@@ -57,7 +57,8 @@ jobs:
       - name: Verify binary executable
         run: |
           ls -l
-          cd dist
+          ls -l CxOneCli.dist
+          cd CxOneCli.dist
           if [ -f "CxOnCli" ]; then
             echo "✅ Binary file generated successfully"
             chmod +x CxOnCli
