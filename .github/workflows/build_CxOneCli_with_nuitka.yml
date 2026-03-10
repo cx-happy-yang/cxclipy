@@ -43,6 +43,7 @@ jobs:
       - name: Install dependencies
         run: |
           # Create and activate virtual environment
+          pwd
           python -m venv myenv
           source myenv/bin/activate
           python -m pip install --upgrade pip --no-cache-dir
