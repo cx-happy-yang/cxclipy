@@ -52,16 +52,7 @@ jobs:
         shell: bash
       - name: Build binary with Nuitka
         run: |
-          CERT_PATH=$(/__w/cxclipy/cxclipy/myenv/bin/python -c "import certifi; print(certifi.where())") \ 
-          && /__w/cxclipy/cxclipy/myenv/bin/python -m nuitka \
-          --onefile \
-          --output-filename CxOnCli \
-          --target-platform linux_x86_64 \
-          --noinclude-default-mode=error \
-          --include-data-files=$CERT_PATH=certifi \
-          --define=certifi.where=$CERT_PATH \
-          --add-data "$CERT_PATH:certifi" \
-          CxOneCli.py
+          CERT_PATH=$(/__w/cxclipy/cxclipy/myenv/bin/python -c "import certifi; print(certifi.where())") && /__w/cxclipy/cxclipy/myenv/bin/python -m nuitka --onefile --output-filename CxOnCli --target-platform linux_x86_64 --noinclude-default-mode=error --include-data-files=$CERT_PATH=certifi --define=certifi.where=$CERT_PATH --add-data "$CERT_PATH:certifi" CxOneCli.py
           git config --global --add safe.directory /__w/cxclipy/cxclipy
       - name: Verify binary executable
         run: |
