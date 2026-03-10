@@ -33,9 +33,6 @@ jobs:
         run: ldd --version
       - name: Checkout cxclipy repository
         uses: actions/checkout@v4
-        with:
-          repository: cx-happy-yang/cxclipy
-          path: cxclipy
       - name: Set up Python 3.8
         uses: actions/setup-python@v5
         with:
