@@ -56,7 +56,8 @@ jobs:
           git config --global --add safe.directory /__w/cxclipy/cxclipy
       - name: Verify binary executable
         run: |
-          cd cxclipy/dist
+          ls -l
+          cd dist
           if [ -f "CxOnCli" ]; then
             echo "✅ Binary file generated successfully"
             chmod +x CxOnCli
