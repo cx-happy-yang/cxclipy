@@ -59,10 +59,10 @@ jobs:
           ls -l
           ls -l CxOneCli.dist
           cd CxOneCli.dist
-          if [ -f "CxOnCli" ]; then
+          if [ -f "CxOnCli.bin" ]; then
             echo "✅ Binary file generated successfully"
-            chmod +x CxOnCli
-            ./CxOnCli -c "import certifi; print('CA File:', certifi.where()); print('File exists:', __import__('os').path.exists(certifi.where()))" || echo "⚠️ Binary runs but certifi check failed (non-critical)"
+            chmod +x CxOnCli.bin
+            ./CxOnCli.bin -c "import certifi; print('CA File:', certifi.where()); print('File exists:', __import__('os').path.exists(certifi.where()))" || echo "⚠️ Binary runs but certifi check failed (non-critical)"
           else
             echo "❌ Binary file not found!"
             exit 1
