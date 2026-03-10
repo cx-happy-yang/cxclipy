@@ -37,44 +37,40 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.8'
-      - uses: Nuitka/Nuitka-Action@main
-        with:
-          nuitka-version: main
-          script-name: CxOneCli.py
-          mode: onefile
-      # - name: Install dependencies
-      #   run: |
-      #     # Create and activate virtual environment
-      #     pwd
-      #     python -m venv myenv
-      #     source myenv/bin/activate
-      #     python -m pip install --upgrade pip --no-cache-dir
-      #     pip install -r requirements.txt --no-cache-dir
-      #     pip install Nuitka[onefile] --no-cache-dir
-      #     pip list
-      #     which nuitka
-      #     pwd
-      #   shell: bash
-      # - name: Build binary with Nuitka
-      #   run: |
-      #     CERT_PATH=$(/__w/cxclipy/cxclipy/myenv/bin/python -c "import certifi; print(certifi.where())") && /__w/cxclipy/cxclipy/myenv/bin/python -m nuitka --onefile --output-filename=CxOneCli.bin --include-data-files=$CERT_PATH=certifi/cacert.pem CxOneCli.py
-      #     git config --global --add safe.directory /__w/cxclipy/cxclipy
-      # - name: Verify binary executable
-      #   run: |
-      #     ls -l
-      #     ls -l CxOneCli.dist
-      #     ls -l CxOneCli.build
-      #     cd CxOneCli.dist
-      #     if [ -f "CxOneCli.bin" ]; then
-      #       echo "✅ Binary file generated successfully"
-      #       chmod +x CxOneCli.bin
-      #       ./CxOneCli.bin -c "import certifi; print('CA File:', certifi.where()); print('File exists:', __import__('os').path.exists(certifi.where()))" || echo "⚠️ Binary runs but certifi check failed (non-critical)"
-      #     else
-      #       echo "❌ Binary file not found!"
-      #       exit 1
-      #     fi
+      - name: Install dependencies
+        run: |
+          # Create and activate virtual environment
+          pwd
+          python -m venv myenv
+          source myenv/bin/activate
+          python -m pip install --upgrade pip --no-cache-dir
+          pip install -r requirements.txt --no-cache-dir
+          pip install Nuitka[onefile] --no-cache-dir
+          pip list
+          which nuitka
+          pwd
+        shell: bash
+      - name: Build binary with Nuitka
+        run: |
+          CERT_PATH=$(/__w/cxclipy/cxclipy/myenv/bin/python -c "import certifi; print(certifi.where())") && /__w/cxclipy/cxclipy/myenv/bin/python -m nuitka --onefile --output-filename=CxOneCli.bin --include-data-files=$CERT_PATH=certifi/cacert.pem -o CxOneCli.bin CxOneCli.py
+          git config --global --add safe.directory /__w/cxclipy/cxclipy
+      - name: Verify binary executable
+        run: |
+          ls -l
+          ls -l CxOneCli.dist
+          ls -l CxOneCli.build
+          cd CxOneCli.dist
+          if [ -f "CxOneCli.bin" ]; then
+            echo "✅ Binary file generated successfully"
+            chmod +x CxOneCli.bin
+            ./CxOneCli.bin -c "import certifi; print('CA File:', certifi.where()); print('File exists:', __import__('os').path.exists(certifi.where()))" || echo "⚠️ Binary runs but certifi check failed (non-critical)"
+          else
+            echo "❌ Binary file not found!"
+            exit 1
+          fi
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
         run: >-
+          ldd /__w/cxclipy/cxclipy/build/CxOneCli.bin
           gh release create ${{ github.ref_name }} /__w/cxclipy/cxclipy/build/CxOneCli.bin --generate-notes --title "Version ${{ github.ref_name }}"
