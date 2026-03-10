@@ -16,18 +16,6 @@ jobs:
       image: ubuntu:20.04
 
     steps:
-      - name: check glibc version
-        run: ldd --version
-      - name: Checkout cxclipy repository
-        uses: actions/checkout@v4
-        with:
-          repository: cx-happy-yang/cxclipy
-          path: cxclipy
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-          cache: 'pip'
       - name: Install system build dependencies
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -46,6 +34,18 @@ jobs:
           apt update
           apt-get install -y gcc g++ libpython3.8-dev \ 
           python3.8-dev unzip curl git autoconf build-essential ca-certificates tzdata gh
+      - name: check glibc version
+        run: ldd --version
+      - name: Checkout cxclipy repository
+        uses: actions/checkout@v4
+        with:
+          repository: cx-happy-yang/cxclipy
+          path: cxclipy
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+          cache: 'pip'
       - name: Install dependencies
         run: |
           # Create and activate virtual environment
