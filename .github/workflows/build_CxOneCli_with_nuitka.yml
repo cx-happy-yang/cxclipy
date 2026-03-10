@@ -28,7 +28,7 @@ jobs:
           chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
           echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
           apt update
-          apt-get install -y gcc g++ libpython3.8-dev python3.8-dev unzip curl git autoconf build-essential ca-certificates tzdata gh lsb-release patchelf
+          apt-get install -y gcc g++ libpython3.8-dev python3.8-dev python3.8-static unzip curl git autoconf build-essential ca-certificates tzdata gh lsb-release patchelf
       - name: check glibc version
         run: ldd --version
       - name: Checkout cxclipy repository
@@ -52,7 +52,7 @@ jobs:
         shell: bash
       - name: Build binary with Nuitka
         run: |
-          CERT_PATH=$(/__w/cxclipy/cxclipy/myenv/bin/python -c "import certifi; print(certifi.where())") && /__w/cxclipy/cxclipy/myenv/bin/python -m nuitka --onefile --output-filename=CxOneCli.bin --include-data-files=$CERT_PATH=certifi/cacert.pem --static-libpython=yes --lto=yes CxOneCli.py
+          CERT_PATH=$(/__w/cxclipy/cxclipy/myenv/bin/python -c "import certifi; print(certifi.where())") && /__w/cxclipy/cxclipy/myenv/bin/python -m nuitka --onefile --output-filename=CxOneCli.bin --include-data-files=$CERT_PATH=certifi/cacert.pem CxOneCli.py
           git config --global --add safe.directory /__w/cxclipy/cxclipy
       - name: Verify binary executable
         run: |
