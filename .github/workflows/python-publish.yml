@@ -1,0 +1,60 @@
+name: Python application
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-22.04
+    container:
+      image: ubuntu:20.04
+
+    steps:
+      - name: apt-get
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install wget -y
+          mkdir -p -m 755 /etc/apt/keyrings
+          out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg
+          cat $out |  tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
+          chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" |  tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          apt update
+          apt-get install -y unzip curl git autoconf build-essential ca-certificates tzdata gh
+      - name: check glibc version
+        run: ldd --version
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+      - name: Install dependencies
+        run: |
+          # Create and activate virtual environment
+          python -m venv myenv
+          source myenv/bin/activate
+          python -m pip install --upgrade pip --no-cache-dir
+          pip install -r requirements.txt --no-cache-dir
+          pip install pyinstaller --no-cache-dir
+          pip install --upgrade pyinstaller --no-cache-dir
+          pip install pyinstaller-versionfile --no-cache-dir
+          pip list
+          which pyinstaller
+        shell: bash
+      - name: Build binary
+        run: |
+          CERT_PATH=$(/__w/cxclipy/cxclipy/myenv/bin/python -c "import certifi; print(certifi.where())") && /__w/cxclipy/cxclipy/myenv/bin/pyinstaller --clean --noconfirm --onefile --nowindow --distpath dist/ --workpath /tmp --add-data "$CERT_PATH:certifi" CxOneCli.py
+          git config --global --add safe.directory /__w/cxclipy/cxclipy
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
+        run: >-
+          gh release create ${{ github.ref_name }} /__w/cxclipy/cxclipy/dist/* --generate-notes --title "Version ${{ github.ref_name }}"
