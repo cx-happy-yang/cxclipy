@@ -7,3 +7,5 @@ __pycache__/
 .venv
 .vscode
 *.bin
+*.command
+*.ubuntu_env

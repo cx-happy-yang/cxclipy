@@ -9,6 +9,7 @@ from CheckmarxPythonSDK.CxOne import (
     create_scan,
     get_a_scan_by_id,
     get_summary_for_many_scans,
+    get_metadata_of_scans,
 )
 from CheckmarxPythonSDK.CxOne.dto import (
     ScanInput,
@@ -16,6 +17,8 @@ from CheckmarxPythonSDK.CxOne.dto import (
     Project,
     ScanConfig,
     ScansCollection,
+    ScanInfo,
+    ScanInfoCollection,
 )
 from pathlib import Path
 
@@ -187,15 +190,35 @@ def check_sast_scan_type(
     Returns:
 
     """
+    FULL_SCAN = "full"
+    INCREMENTAL_SCAN = "incremental"
     if not sast_incremental:
-        return "full"
-    number_of_scans = scan_collection.filtered_total_count + 1
+        return FULL_SCAN
+    logger.info(f"full_scan_cycle: {full_scan_cycle}")
+    all_scan_ids = [scan.id for scan in scan_collection.scans]
+    last_scan_id = all_scan_ids[0]
+    sast_metadatas = get_metadata_of_scans(scan_ids=all_scan_ids)
+    last_scan_metadata = [scan_info for scan_info in sast_metadatas.scans if scan_info.scan_id == last_scan_id]
+    if last_scan_metadata:
+        is_incremental = last_scan_metadata[0].is_incremental
+        logger.info(f"the last scan metadata is_incremental is {is_incremental}")
+        if not is_incremental:
+            logger.info("last scan is a full scan, current scan will be an incremental scan")
+            return INCREMENTAL_SCAN
+    number_of_scans_from_last_full_scan = 0
+    for sast_metadata in sast_metadatas.scans:
+        number_of_scans_from_last_full_scan += 1
+        if not sast_metadata.is_incremental:
+            break
+    logger.info(f"number_of_scans_from_last_full_scan: {number_of_scans_from_last_full_scan}")
+    number_of_scans = number_of_scans_from_last_full_scan
     remainder = number_of_scans % full_scan_cycle
-    if remainder == 0:
+    if number_of_scans_from_last_full_scan >= full_scan_cycle or remainder == 0:
         logger.info(f"Now this scan has reached a full scan cycle: {full_scan_cycle}, "
                     f"it is required to initiate a Full scan")
-        return "full"
-    return "incremental"
+        return FULL_SCAN
+    logger.info("current scan will be an incremental scan")
+    return INCREMENTAL_SCAN
 
 
 def check_scanners(

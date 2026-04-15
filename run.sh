@@ -1,4 +1,5 @@
 curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.6.9/CxOneCli
+ls -lah
 chmod +x ./CxOneCli
 source ~/.secrets
 # run sca scan
@@ -8,7 +9,6 @@ source ~/.secrets
 --cxone_tenant_name happy  \
 --cxone_grant_type refresh_token \
 --cxone_refresh_token $CXONE_HAPPY_TOKEN \
-python CxOneCli.py scan \
 --preset "ASA Premium"  \
 --incremental true \
 --location_path /mnt/e/github.com/CSPF-Founder/JavaVulnerableLab \
