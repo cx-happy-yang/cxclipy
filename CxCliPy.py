@@ -259,6 +259,8 @@ def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_n
         else:
             logger.info(f"branched project already exists with id: {branched_project_id}")
         project_id = branched_project_id
+        logger.info("upload source code zip file to branched project")
+        projects_api.upload_source_code_zip_file(project_id=project_id, zip_file_path=str(zip_file_path))
 
     preset_id = projects_api.get_preset_id_by_name(preset_name=preset_name)
     logger.info("preset id: {}".format(preset_id))
