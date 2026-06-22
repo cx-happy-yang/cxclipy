@@ -4,6 +4,11 @@ All notable changes to CxCliPy will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.2] - 2025-06-22
+
+### Changed
+- Use `upload_source_code_zip_file` + `create_new_scan` for all scans to bypass SCM restrictions
+
 ## [0.7.1] - 2025-06-22
 
 ### Fixed
