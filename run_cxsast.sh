@@ -2,7 +2,8 @@ curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.7.1/CxCliPy
 ls -lah
 chmod +x ./CxCliPy
 source ~/.secrets
-# run scan
+
+# Test flow without --branch_project (local ZIP upload)
 ./CxCliPy scan \
 --cxsast_base_url http://192.168.3.97 \
 --cxsast_username $CXSAST_USERNAME \
@@ -14,21 +15,21 @@ source ~/.secrets
 --project_name /CxServer/jvl_git \
 --exclude_folders "test,integrationtest" \
 --exclude_files "*min.js" \
---report_csv cx-report.csv \
+--report_csv cx-report-without-branch.csv \
+--full_scan_cycle 10
+
+# Test flow with --branch_project (upload ZIP to branched project)
+./CxCliPy scan \
+--cxsast_base_url http://192.168.3.97 \
+--cxsast_username $CXSAST_USERNAME \
+--cxsast_password $CXSAST_PASSWORD \
+--preset All \
+--incremental False \
+--location_type Folder \
+--location_path /home/happy/JavaVulnerableLab \
+--project_name /CxServer/jvl_git \
+--exclude_folders "test,integrationtest" \
+--exclude_files "*min.js" \
+--report_csv cx-report-with-branch.csv \
 --full_scan_cycle 10 \
 --branch_project my-branched-project
-
-# run other scans
-# ./CxCliPy scan \
-# --cxsast_base_url http://192.168.3.84 \
-# --cxsast_username $CXSAST_USERNAME \
-# --cxsast_password $CXSAST_PASSWORD \
-# --preset All \
-# --incremental False \
-# --location_type Folder \
-# --location_path /home/happy/Documents/JavaVulnerableLab \
-# --project_name /CxServer/happy-2022-11-21 \
-# --exclude_folders "test,integrationtest" \
-# --exclude_files "*min.js" \
-# --report_csv cx-report.csv \
-# --full_scan_cycle 10
