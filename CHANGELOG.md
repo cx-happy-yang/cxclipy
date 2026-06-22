@@ -4,6 +4,11 @@ All notable changes to CxCliPy will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.1] - 2025-06-22
+
+### Fixed
+- Fix branched project scan: upload ZIP via `upload_source_code_zip_file` to bypass SCM restriction
+
 ## [0.7.0] - 2025-06-22
 
 ### Added
