@@ -2,7 +2,7 @@ curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.6.9/CxOneCli
 ls -lah
 chmod +x ./CxOneCli
 source ~/.secrets
-# run sca scan
+# run scan
 ./CxOneCli scan \
 --cxone_access_control_url https://sng.iam.checkmarx.net \
 --cxone_server https://sng.ast.checkmarx.net \
