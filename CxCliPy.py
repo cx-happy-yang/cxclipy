@@ -259,8 +259,9 @@ def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_n
         else:
             logger.info(f"branched project already exists with id: {branched_project_id}")
         project_id = branched_project_id
-        logger.info("upload source code zip file to branched project")
-        projects_api.upload_source_code_zip_file(project_id=project_id, zip_file_path=str(zip_file_path))
+
+    logger.info("upload source code zip file to project")
+    projects_api.upload_source_code_zip_file(project_id=project_id, zip_file_path=str(zip_file_path))
 
     preset_id = projects_api.get_preset_id_by_name(preset_name=preset_name)
     logger.info("preset id: {}".format(preset_id))
@@ -278,12 +279,7 @@ def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_n
 
     logger.info("create new scan")
     logger.info(f"The scan type will be: {'incremental' if incremental else 'full'} ")
-    if branched_project_name:
-        scan = scan_api.create_new_scan(project_id=project_id, is_incremental=incremental, comment="")
-    else:
-        scan = scan_api.create_new_scan_with_settings(project_id=project_id, comment="", preset_id=preset_id,
-                                                      zipped_source_file_path=str(zip_file_path),
-                                                      is_incremental=incremental)
+    scan = scan_api.create_new_scan(project_id=project_id, is_incremental=incremental, comment="")
     scan_id = scan.id
     logger.info("scan_id : {}".format(scan_id))
 
