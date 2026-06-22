@@ -72,6 +72,9 @@ def get_command_line_arguments():
     parser.add_argument('-full_scan_cycle', '--full_scan_cycle', default=10,
                         help="Defines the number of incremental scans to be performed, before performing a periodic "
                              "full scan")
+    parser.add_argument('-branch_project', '--branch_project', default=None,
+                        help="Branched project name. If specified, scan will be created under this branched project. "
+                             "If the branched project does not exist, it will be created.")
     return parser.parse_known_args()
 
 
@@ -191,7 +194,7 @@ def create_zip_file_from_location_path(location_path_str: str, project_name: str
 
 def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_name: str, zip_file_path: str,
                                 exclude_folders: str, exclude_files: str, incremental: bool = False,
-                                full_scan_cycle=10):
+                                full_scan_cycle=10, branched_project_name=None):
     """
 
     Args:
@@ -203,6 +206,7 @@ def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_n
         exclude_files (str):
         incremental (bool):
         full_scan_cycle (int):
+        branched_project_name (str): name of the branched project to scan under
 
     Returns:
         return scan id if scan finished, otherwise return None
@@ -231,6 +235,30 @@ def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_n
         project = projects_api.create_project_with_default_configuration(project_name=project_name, team_id=team_id)
         project_id = project.id
         logger.info(f"new project with project_id: {project_id}")
+
+    if branched_project_name:
+        logger.info(f"branched project name: {branched_project_name}")
+        branched_project_id = projects_api.get_project_id_by_project_name_and_team_full_name(
+            project_name=branched_project_name, team_full_name=team_full_name
+        )
+        if not branched_project_id:
+            logger.info("branched project does not exist, creating it")
+            branched_project = projects_api.create_branched_project(
+                project_id=project_id, branched_project_name=branched_project_name
+            )
+            branched_project_id = branched_project.id
+            logger.info(f"branched project created with id: {branched_project_id}")
+            logger.info("waiting for branched project to finish")
+            while True:
+                status = projects_api.get_branch_project_status(branch_project_id=branched_project_id)
+                logger.info(f"branch project status: {status}")
+                if status == "Completed":
+                    break
+                time.sleep(10)
+            logger.info("branched project is ready")
+        else:
+            logger.info(f"branched project already exists with id: {branched_project_id}")
+        project_id = branched_project_id
 
     preset_id = projects_api.get_preset_id_by_name(preset_name=preset_name)
     logger.info("preset id: {}".format(preset_id))
@@ -313,9 +341,8 @@ def generate_report(scan_id: int, report_type: str, report_file_path: str):
 
 
 def get_similarity_ids_of_a_scan(scan_id):
-    from CheckmarxPythonSDK.CxODataApiSDK.HttpRequests import get_request
-    url = f"/Cxwebinterface/odata/v1/Scans({scan_id})/Results?$select=SimilarityId,PathId"
-    return get_request(relative_url=url)
+    from CheckmarxPythonSDK.CxODataApiSDK import get_similarity_ids_of_a_scan
+    return get_similarity_ids_of_a_scan(scan_id=scan_id)
 
 
 def update_csv_report(cx_report_file_path, scan_id):
@@ -375,12 +402,14 @@ def run_scan_and_generate_reports(arguments):
     report_pdf = arguments.report_pdf
     report_csv = arguments.report_csv
     full_scan_cycle = int(arguments.full_scan_cycle)
+    branch_project = arguments.branch_project
     logger.info(
         f"preset: {preset}\n"
         f"incremental: {incremental}\n"
         f"location_type: {location_type}\n"
         f"location_path: {location_path}\n"
         f"project_name: {project_full_path}\n"
+        f"branch_project: {branch_project}\n"
         f"report_xml: {report_xml}\n"
         f"report_pdf: {report_pdf}\n"
         f"report_csv: {report_csv}\n"
@@ -397,14 +426,18 @@ def run_scan_and_generate_reports(arguments):
     scan_id = cx_scan_from_local_zip_file(preset_name=preset, team_full_name=team_full_name, project_name=project_name,
                                           zip_file_path=zip_file_path, exclude_folders=exclude_folders,
                                           exclude_files=exclude_files, incremental=incremental,
-                                          full_scan_cycle=full_scan_cycle)
+                                          full_scan_cycle=full_scan_cycle,
+                                          branched_project_name=branch_project)
 
     if scan_id is None:
         logger.info("Scan did not finish successfully, exit!")
         return
 
     logger.info(f"deleting zip file: {zip_file_path}")
-    pathlib.Path(zip_file_path).unlink()
+    try:
+        pathlib.Path(zip_file_path).unlink()
+    except PermissionError:
+        logger.warning("could not delete zip file, it may be in use by another process")
 
     if report_xml:
         generate_report(scan_id=scan_id, report_type="XML", report_file_path=report_xml)
