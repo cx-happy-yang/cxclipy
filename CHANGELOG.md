@@ -4,13 +4,22 @@ All notable changes to CxCliPy will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.0] - 2025-06-22
+
 ### Added
 - Add `publish-CxCliPy.yml` workflow for building CxCliPy binary
-- Add support for branched projects in scan function
+- Add `run_cxone.sh` and `run_cxsast.sh` helper scripts
+- Add `CHANGELOG.md`
 
 ### Changed
 - Rename `python-publish.yml` to `publish-CxOneCli.yml`
-- Update CheckmarxPythonSDK to 1.7.9
+- Rename `run.sh` to `run_cxone.sh`
+- Update CheckmarxPythonSDK from 1.6.0 to 1.8.8
+- Update `group.py` to use latest SDK API (`GroupsApi.post_groups`/`post_children`)
+- Fix CxCliPy README usage example with correct `--cxsast_*` arguments
+
+### Added (v0.6.9 era)
+- Add support for branched projects in scan function
 
 ## [0.6.9] - 2025-01-16
 

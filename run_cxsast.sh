@@ -1,4 +1,4 @@
-curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.6.9/CxCliPy
+curl -LO https://github.com/HappyY19/cxclipy/releases/download/v0.7.0/CxCliPy
 ls -lah
 chmod +x ./CxCliPy
 source ~/.secrets
