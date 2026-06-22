@@ -1,10 +1,6 @@
-from CheckmarxPythonSDK.CxOne.AccessControlAPI import (
-    get_group_by_name
-)
-from CheckmarxPythonSDK.CxOne.KeycloakAPI import (
-    create_group,
-    create_subgroup,
-)
+from CheckmarxPythonSDK.CxOne import get_group_by_name
+from CheckmarxPythonSDK.CxOne.KeycloakAPI import GroupsApi
+from CheckmarxPythonSDK.CxOne.dto import GroupRepresentation
 from src.log import logger
 
 
@@ -46,7 +42,12 @@ def create_sub_groups(cxone_tenant_name, group_names, root_group_id) -> str:
         group = get_group_by_name(realm=cxone_tenant_name, group_name=group_path)
         if not group:
             logger.info(f"current group: {group_path} does not exist, start create")
-            create_subgroup(realm=cxone_tenant_name, group_id=parent_group_id, subgroup_name=group_name)
+            groups_api = GroupsApi()
+            groups_api.post_children(
+                realm=cxone_tenant_name,
+                id=parent_group_id,
+                group_representation=GroupRepresentation(name=group_name)
+            )
             logger.info(f"finish create group: {group_path}")
             group = get_group_by_name(realm=cxone_tenant_name, group_name=group_path)
         parent_group_id = group.id
@@ -60,7 +61,11 @@ def create_root_group_if_not_exist(cxone_tenant_name, root_group_name) -> str:
         logger.info(f"root group {root_group_name} exist. id: {root_group_id}")
     else:
         logger.info(f"root group not exist, start create root group")
-        create_group(realm=cxone_tenant_name, group_name=root_group_name)
+        groups_api = GroupsApi()
+        groups_api.post_groups(
+            realm=cxone_tenant_name,
+            group_representation=GroupRepresentation(name=root_group_name)
+        )
         root_group = get_group_by_name(realm=cxone_tenant_name, group_name=root_group_name)
         root_group_id = root_group.id
         logger.info(f"root group {root_group_name} created. id: {root_group_id}")
