@@ -69,6 +69,9 @@ def get_command_line_arguments():
     parser.add_argument('-report_xml', '--report_xml', default=None, help="xml report file path")
     parser.add_argument('-report_pdf', '--report_pdf', default=None, help="pdf report file path")
     parser.add_argument('-report_csv', '--report_csv', default=None, help="csv report file path")
+    parser.add_argument('-filter_severity', '--filter_severity', default=None,
+                        help="Filter severities for report. Comma separated string, "
+                             "e.g. \"Critical,High,Medium\". Supported values: Critical, High, Medium, Low, Info.")
     parser.add_argument('-full_scan_cycle', '--full_scan_cycle', default=10,
                         help="Defines the number of incremental scans to be performed, before performing a periodic "
                              "full scan")
@@ -306,18 +309,111 @@ def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_n
     return scan_id
 
 
-def generate_report(scan_id: int, report_type: str, report_file_path: str):
+def _generate_report_with_severity_filter(scan_id, report_type, report_file_path, filter_severity):
+    """
+    Generate report using Portal SOAP API which supports severity filtering.
+
+    Args:
+        scan_id (int):
+        report_type (str): e.g. "XML", "PDF", "CSV"
+        report_file_path (str):
+        filter_severity (str): comma separated severity string, e.g. "Critical,High,Medium"
+    """
+    import base64
+    from CheckmarxPythonSDK.CxPortalSoapApiSDK.CxPortalWebService import (
+        create_scan_report as soap_create_scan_report,
+        CxPortalWebService,
+    )
+
+    portal_service = CxPortalWebService()
+
+    severities = [s.strip().lower() for s in filter_severity.split(",")]
+
+    severity_kwargs = {
+        "results_severity_all": False,
+        "results_severity_criticl": "critical" in severities,
+        "results_severity_high": "high" in severities,
+        "results_severity_medium": "medium" in severities,
+        "results_severity_low": "low" in severities,
+        "results_severity_info": "info" in severities,
+    }
+
+    logger.info(f"register scan report via SOAP API with severity filter: {filter_severity}")
+    result = soap_create_scan_report(
+        scan_id=scan_id,
+        report_type=report_type.upper(),
+        **severity_kwargs
+    )
+
+    if not result.get("IsSuccesfull"):
+        logger.error(f"Failed to create scan report via SOAP API: {result.get('ErrorMessage')}")
+        return
+
+    report_id = result.get("ID")
+    logger.info(f"report_id: {report_id}")
+
+    logger.info("waiting for report generation to finish (SOAP API)")
+    while True:
+        # Use suds client directly to get IsReady/IsFailed (SDK's get_scan_report_status
+        # has a bug where it maps the non-existent "Status" field instead of IsReady/IsFailed)
+        status_response = portal_service.suds_client.execute(
+            "GetScanReportStatus", SessionID="0", ReportID=report_id
+        )
+        is_ready = getattr(status_response, "IsReady", None)
+        is_failed = getattr(status_response, "IsFailed", None)
+        logger.info(f"report status: IsReady={is_ready}, IsFailed={is_failed}")
+        if is_ready:
+            break
+        if is_failed:
+            logger.error(f"Report generation failed")
+            return
+        time.sleep(10)
+
+    logger.info("get report by id (SOAP API)")
+    report_result = portal_service.get_scan_report(report_id=report_id)
+    report_content = report_result.get("ScanResults")
+
+    if report_content is None:
+        logger.error(f"Failed to get report content: {report_result.get('ErrorMessage')}")
+        return
+
+    logger.info("write report")
+    # The SOAP API returns ScanResults as a base64-encoded string
+    if isinstance(report_content, str):
+        try:
+            report_content = base64.b64decode(report_content)
+        except Exception:
+            # If decoding fails, it may already be raw XML
+            report_content = report_content.encode("utf-8")
+
+    with open(str(report_file_path), "wb") as f_out:
+        f_out.write(report_content)
+
+
+def generate_report(scan_id: int, report_type: str, report_file_path: str, filter_severity=None):
     """
 
     Args:
         scan_id (int):
         report_type (str):
         report_file_path (str):
+        filter_severity (str): comma separated severity string, e.g. "Critical,High,Medium".
+            When provided, the Portal SOAP API is used instead of REST API.
 
     Returns:
 
     """
-    from CheckmarxPythonSDK.CxRestAPISDK import ScansAPI
+    # Use SOAP API when severity filtering is requested
+    if filter_severity:
+        _generate_report_with_severity_filter(
+            scan_id=scan_id,
+            report_type=report_type,
+            report_file_path=report_file_path,
+            filter_severity=filter_severity,
+        )
+        return
+
+    from CheckmarxPythonSDK.CxRestAPISdk import ScansAPI
     scan_api = ScansAPI()
 
     logger.info("register scan report")
@@ -404,6 +500,7 @@ def run_scan_and_generate_reports(arguments):
     report_csv = arguments.report_csv
     full_scan_cycle = int(arguments.full_scan_cycle)
     branch_project = arguments.branch_project
+    filter_severity = arguments.filter_severity
     logger.info(
         f"preset: {preset}\n"
         f"incremental: {incremental}\n"
@@ -415,6 +512,7 @@ def run_scan_and_generate_reports(arguments):
         f"report_pdf: {report_pdf}\n"
         f"report_csv: {report_csv}\n"
         f"full_scan_cycle: {full_scan_cycle}\n"
+        f"filter_severity: {filter_severity}\n"
     )
 
     logger.info(f"creating zip file by zip the source code folder: {location_path}")
@@ -441,11 +539,14 @@ def run_scan_and_generate_reports(arguments):
         logger.warning("could not delete zip file, it may be in use by another process")
 
     if report_xml:
-        generate_report(scan_id=scan_id, report_type="XML", report_file_path=report_xml)
+        generate_report(scan_id=scan_id, report_type="XML", report_file_path=report_xml,
+                        filter_severity=filter_severity)
     if report_pdf:
-        generate_report(scan_id=scan_id, report_type="PDF", report_file_path=report_pdf)
+        generate_report(scan_id=scan_id, report_type="PDF", report_file_path=report_pdf,
+                        filter_severity=filter_severity)
     if report_csv:
-        generate_report(scan_id=scan_id, report_type="CSV", report_file_path=report_csv)
+        generate_report(scan_id=scan_id, report_type="CSV", report_file_path=report_csv,
+                        filter_severity=filter_severity)
     logger.info("report generated successfully")
 
 
