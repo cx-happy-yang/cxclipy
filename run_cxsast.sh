@@ -15,7 +15,6 @@ source ~/.secrets
 --project_name /CxServer/jvl_git \
 --exclude_folders "test,integrationtest" \
 --exclude_files "*min.js" \
---report_csv cx-report-without-branch.csv \
 --report_xml cx-report-without-branch.xml \
 --filter_severity "Critical,High,Medium" \
 --full_scan_cycle 10
@@ -32,7 +31,6 @@ source ~/.secrets
 --project_name /CxServer/jvl_git \
 --exclude_folders "test,integrationtest" \
 --exclude_files "*min.js" \
---report_csv cx-report-with-branch.csv \
 --report_xml cx-report-with-branch.xml \
 --filter_severity "Critical,High,Medium" \
 --full_scan_cycle 10 \
