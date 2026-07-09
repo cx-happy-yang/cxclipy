@@ -413,7 +413,7 @@ def generate_report(scan_id: int, report_type: str, report_file_path: str, filte
         )
         return
 
-    from CheckmarxPythonSDK.CxRestAPISdk import ScansAPI
+    from CheckmarxPythonSDK.CxRestAPISDK import ScansAPI
     scan_api = ScansAPI()
 
     logger.info("register scan report")
