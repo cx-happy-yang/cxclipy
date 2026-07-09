@@ -4,6 +4,17 @@ All notable changes to CxCliPy will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-07-09
+
+### Added
+- Add `--filter_severity` CLI option to filter report results by severity (Critical, High, Medium, Low, Info)
+- Add `_generate_report_with_severity_filter()` using Portal SOAP API which supports per-severity filtering
+- Support severity filtering for all report types (XML, PDF, CSV)
+
+### Changed
+- Update CheckmarxPythonSDK from 1.8.8 to 1.8.9
+- When `--filter_severity` is provided, `generate_report()` uses Portal SOAP API instead of REST API
+
 ## [0.7.2] - 2025-06-22
 
 ### Changed
