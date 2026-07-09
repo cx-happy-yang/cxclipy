@@ -16,6 +16,8 @@ source ~/.secrets
 --exclude_folders "test,integrationtest" \
 --exclude_files "*min.js" \
 --report_csv cx-report-without-branch.csv \
+--report_xml cx-report-without-branch.xml \
+--filter_severity "Critical,High,Medium" \
 --full_scan_cycle 10
 
 # Test flow with --branch_project (upload ZIP to branched project)
@@ -31,5 +33,7 @@ source ~/.secrets
 --exclude_folders "test,integrationtest" \
 --exclude_files "*min.js" \
 --report_csv cx-report-with-branch.csv \
+--report_xml cx-report-with-branch.xml \
+--filter_severity "Critical,High,Medium" \
 --full_scan_cycle 10 \
 --branch_project my-branched-project
