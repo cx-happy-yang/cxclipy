@@ -4,6 +4,14 @@ All notable changes to CxCliPy will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.4] - 2026-07-09
+
+### Fixed
+- Fix typo: `CxRestAPISdk` -> `CxRestAPISDK` in `generate_report` import
+
+### Changed
+- Update `run_cxsast.sh` to use `--report_xml` with `--filter_severity` instead of `--report_csv`
+
 ## [0.7.3] - 2026-07-09
 
 ### Added
