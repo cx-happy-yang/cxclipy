@@ -555,7 +555,7 @@ def run_scan_and_generate_reports(arguments):
     try:
         with open(result_json_path, 'w') as f:
             json.dump(scan_result, f, indent=4)
-        logger.info(f"result.json written: {result_json_path}")
+        logger.info(f"{project_name}.json written: {result_json_path}")
     except Exception as e:
         logger.error(f"failed to write result.json: {e}")
 
