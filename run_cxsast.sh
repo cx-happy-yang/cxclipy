@@ -5,9 +5,10 @@ source ~/.secrets
 
 # Test flow without --branch_project (local ZIP upload)
 ./CxCliPy scan \
---cxsast_base_url http://192.168.3.97 \
+--cxsast_base_url https://192.168.3.97 \
 --cxsast_username $CXSAST_USERNAME \
 --cxsast_password $CXSAST_PASSWORD \
+--cxsast_verify /mnt/d/Downloads/DESKTOP-RMVPBOC.crt \
 --preset All \
 --incremental False \
 --location_type Folder \
@@ -21,9 +22,10 @@ source ~/.secrets
 
 # Test flow with --branch_project (upload ZIP to branched project)
 ./CxCliPy scan \
---cxsast_base_url http://192.168.3.97 \
+--cxsast_base_url https://192.168.3.97 \
 --cxsast_username $CXSAST_USERNAME \
 --cxsast_password $CXSAST_PASSWORD \
+--cxsast_verify /mnt/d/Downloads/DESKTOP-RMVPBOC.crt \
 --preset All \
 --incremental False \
 --location_type Folder \
