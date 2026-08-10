@@ -17,6 +17,7 @@ import os
 from os.path import exists
 from zipfile import ZipFile, ZIP_DEFLATED
 import logging
+import json
 
 from __version__ import __version__
 
@@ -215,7 +216,7 @@ def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_n
         branched_project_name (str): name of the branched project to scan under
 
     Returns:
-        return scan id if scan finished, otherwise return None
+        return dict with scan_id, statistics, result_url if scan finished, otherwise return None
     """
     from CheckmarxPythonSDK.CxRestAPISDK import TeamAPI, ProjectsAPI, ScansAPI
     team_api = TeamAPI()
@@ -303,16 +304,23 @@ def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_n
     logger.info("get statistics results by scan id")
     statistics = scan_api.get_statistics_results_by_scan_id(scan_id=scan_id)
     statistics_updated = {
+        "Critical": getattr(statistics, 'critical_severity', 0),
         "High": statistics.high_severity,
         "Medium": statistics.medium_severity,
         "Low": statistics.low_severity,
         "Info": statistics.info_severity
     }
     logger.info(f"statistics: {statistics_updated}")
+    result_url = None
     if cxsast_base_url:
-        logger.info("result link: {}/CxWebClient/ViewerMain.aspx?scanId={}".format(
-            cxsast_base_url.rstrip("/"), scan_id))
-    return scan_id
+        result_url = "{}/CxWebClient/ViewerMain.aspx?scanId={}".format(
+            cxsast_base_url.rstrip("/"), scan_id)
+        logger.info("result link: {}".format(result_url))
+    return {
+        "scan_id": scan_id,
+        "statistics": statistics_updated,
+        "result_url": result_url
+    }
 
 
 def _generate_report_with_severity_filter(scan_id, report_type, report_file_path, filter_severity):
@@ -529,16 +537,27 @@ def run_scan_and_generate_reports(arguments):
     zip_file_path = create_zip_file_from_location_path(location_path, project_name, exclude_folders_str=exclude_folders,
                                                        exclude_files_str=exclude_files)
     logger.info(f"ZIP file created: {zip_file_path}")
-    scan_id = cx_scan_from_local_zip_file(preset_name=preset, team_full_name=team_full_name, project_name=project_name,
-                                          zip_file_path=zip_file_path, exclude_folders=exclude_folders,
-                                          exclude_files=exclude_files, incremental=incremental,
-                                          full_scan_cycle=full_scan_cycle,
-                                          branched_project_name=branch_project,
-                                          cxsast_base_url=arguments.cxsast_base_url)
+    scan_result = cx_scan_from_local_zip_file(preset_name=preset, team_full_name=team_full_name, project_name=project_name,
+                                              zip_file_path=zip_file_path, exclude_folders=exclude_folders,
+                                              exclude_files=exclude_files, incremental=incremental,
+                                              full_scan_cycle=full_scan_cycle,
+                                              branched_project_name=branch_project,
+                                              cxsast_base_url=arguments.cxsast_base_url)
 
-    if scan_id is None:
+    if scan_result is None:
         logger.info("Scan did not finish successfully, exit!")
         return
+
+    scan_id = scan_result["scan_id"]
+
+    logger.info(f"writing {project_name}.json to source code folder: {location_path}")
+    result_json_path = os.path.join(location_path, f"{project_name}.json")
+    try:
+        with open(result_json_path, 'w') as f:
+            json.dump(scan_result, f, indent=4)
+        logger.info(f"result.json written: {result_json_path}")
+    except Exception as e:
+        logger.error(f"failed to write result.json: {e}")
 
     logger.info(f"deleting zip file: {zip_file_path}")
     try:
