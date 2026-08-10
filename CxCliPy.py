@@ -197,7 +197,8 @@ def create_zip_file_from_location_path(location_path_str: str, project_name: str
 
 def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_name: str, zip_file_path: str,
                                 exclude_folders: str, exclude_files: str, incremental: bool = False,
-                                full_scan_cycle=10, branched_project_name=None):
+                                full_scan_cycle=10, branched_project_name=None,
+                                cxsast_base_url=None):
     """
 
     Args:
@@ -306,6 +307,9 @@ def cx_scan_from_local_zip_file(preset_name: str, team_full_name: str, project_n
         "Info": statistics.info_severity
     }
     logger.info(f"statistics: {statistics_updated}")
+    if cxsast_base_url:
+        logger.info("result link: {}/CxWebClient/ViewerMain.aspx?scanId={}".format(
+            cxsast_base_url.rstrip("/"), scan_id))
     return scan_id
 
 
@@ -526,7 +530,8 @@ def run_scan_and_generate_reports(arguments):
                                           zip_file_path=zip_file_path, exclude_folders=exclude_folders,
                                           exclude_files=exclude_files, incremental=incremental,
                                           full_scan_cycle=full_scan_cycle,
-                                          branched_project_name=branch_project)
+                                          branched_project_name=branch_project,
+                                          cxsast_base_url=arguments.cxsast_base_url)
 
     if scan_id is None:
         logger.info("Scan did not finish successfully, exit!")
