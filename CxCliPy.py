@@ -18,6 +18,8 @@ from os.path import exists
 from zipfile import ZipFile, ZIP_DEFLATED
 import logging
 
+from __version__ import __version__
+
 # create logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -492,6 +494,7 @@ def update_csv_report(cx_report_file_path, scan_id):
 
 
 def run_scan_and_generate_reports(arguments):
+    logger.info(f"CxCliPy version {__version__}")
     preset = arguments.preset
     incremental = False if arguments.incremental.lower() == "false" else True
     location_type = arguments.location_type
