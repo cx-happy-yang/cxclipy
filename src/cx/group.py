@@ -1,6 +1,6 @@
 from CheckmarxPythonSDK.CxOne import get_group_by_name
 from CheckmarxPythonSDK.CxOne.KeycloakAPI import GroupsApi
-from CheckmarxPythonSDK.CxOne.dto import GroupRepresentation
+from CheckmarxPythonSDK.CxOne.KeycloakAPI.dto import GroupRepresentation
 from src.log import logger
 
 

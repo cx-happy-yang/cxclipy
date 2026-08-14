@@ -48,10 +48,9 @@ Go to the [releases page](https://github.com/HappyY19/cxclipy/releases) and down
 ```
 
 **Note on `--project_name`**: it must be in the `group/project` format (e.g. `dev/my-project`).
-The group must already exist in the CxOne tenant. A bare project name (without a group prefix)
-fails, because CxOneCli then tries to create a root group with an empty name, and group creation
-is not supported by the pinned CheckmarxPythonSDK version. The project itself is created
-automatically if it does not exist.
+A bare project name (without a group prefix) resolves to an empty group path, which cannot be
+looked up or created in the CxOne tenant. When the group path is given, missing groups are
+created automatically, and the project itself is created automatically if it does not exist.
 
 ### CxCliPy (CxSAST platform)
 
