@@ -31,7 +31,7 @@ Go to the [releases page](https://github.com/HappyY19/cxclipy/releases) and down
 --preset "ASA Premium"  \
 --incremental false \
 --location_path E:\github.com\CSPF-Founder\JavaVulnerableLab \
---project_name happy-test-2022-04-20 \
+--project_name your_group/happy-test-2022-04-20 \
 --branch master \
 --exclude_folders "test,integrationtest" \
 --exclude_files "*min.js" \
@@ -46,6 +46,12 @@ Go to the [releases page](https://github.com/HappyY19/cxclipy/releases) and down
 --scanners sast,apisec \
 --include_dot_git_folder true
 ```
+
+**Note on `--project_name`**: it must be in the `group/project` format (e.g. `dev/my-project`).
+The group must already exist in the CxOne tenant. A bare project name (without a group prefix)
+fails, because CxOneCli then tries to create a root group with an empty name, and group creation
+is not supported by the pinned CheckmarxPythonSDK version. The project itself is created
+automatically if it does not exist.
 
 ### CxCliPy (CxSAST platform)
 
