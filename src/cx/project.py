@@ -37,8 +37,8 @@ def process_project(
             project_input = ProjectInput(
                 name=project.name,
                 groups=group_ids,
-                repo_url=project.repoUrl,
-                main_branch=project.mainBranch,
+                repoUrl=project.repo_url,
+                mainBranch=project.main_branch,
                 origin=project.origin,
                 tags=project.tags,
                 criticality=project.criticality
@@ -52,21 +52,21 @@ def process_project(
             key="scan.config.sca.ExploitablePath",
             name="exploitablePath",
             category="sca",
-            origin_level="Project",
+            originLevel="Project",
             value="false",
-            value_type="Bool",
-            value_type_params=None,
-            allow_override=True
+            valueType="Bool",
+            valueTypeParams=None,
+            allowOverride=True
         ),
         ScanParameter(
             key="scan.config.sca.LastSastScanTime",
             name="lastSastScanTime",
             category="sca",
-            origin_level="Project",
+            originLevel="Project",
             value=f"{sca_last_sast_scan_time}",
-            value_type="Number",
-            value_type_params=None,
-            allow_override=True
+            valueType="Number",
+            valueTypeParams=None,
+            allowOverride=True
         ),
     ]
     define_parameters_in_the_input_list_for_a_specific_project(

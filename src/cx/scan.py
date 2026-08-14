@@ -140,7 +140,7 @@ def create_scan_configs(
             )
         else:
             scan_configs.append(ScanConfig(type=scanner, value={}))
-    logger.info(f"scan_configs: {[scan_config.to_dict() for scan_config in scan_configs]}")
+    logger.info(f"scan_configs: {scan_configs}")
     return scan_configs
 
 
@@ -158,19 +158,19 @@ def show_scan_statistics(scanners: List[str], scan_id: str):
         return
     results_summary = scan_summaries[0]
     if "sast" in scanners:
-        sast_statistics = results_summary.sast_counters.get('severityCounters')
+        sast_statistics = getattr(results_summary.sast_counters, "severity_counters", None)
         show_scanner_statistics(scanner="sast", statistics=sast_statistics)
     if "sca" in scanners:
-        sca_statistics = results_summary.sca_counters.get('severityCounters')
+        sca_statistics = getattr(results_summary.sca_counters, "severity_counters", None)
         show_scanner_statistics(scanner="sca", statistics=sca_statistics)
     if "apisec" in scanners:
-        api_sec_statistics = results_summary.api_sec_counters.get('severityCounters')
+        api_sec_statistics = getattr(results_summary.api_sec_counters, "severity_counters", None)
         show_scanner_statistics(scanner="apisec", statistics=api_sec_statistics)
     if "kics" in scanners:
-        kics_statistics = results_summary.kics_counters.get('severityCounters')
+        kics_statistics = getattr(results_summary.kics_counters, "severity_counters", None)
         show_scanner_statistics(scanner="kics", statistics=kics_statistics)
     if "containers" in scanners:
-        container_statistics = results_summary.sca_containers_counters.get('severityVulnerabilitiesCounters')
+        container_statistics = getattr(results_summary.sca_containers_counters, "severity_vulnerabilities_counters", None)
         show_scanner_statistics(scanner="containers", statistics=container_statistics)
 
 
@@ -326,7 +326,7 @@ def cx_scan_from_local_zip_file(
     )
     scan_input = ScanInput(
         type="upload",
-        handler=Upload(upload_url=upload_url, branch=branch),
+        handler=Upload(uploadUrl=upload_url, branch=branch),
         project=Project(id=project_id),
         configs=scan_configs,
         tags=scan_tags,

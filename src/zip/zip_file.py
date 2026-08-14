@@ -1,5 +1,6 @@
 import os
 import csv
+from time import sleep
 from datetime import datetime
 from pathlib import Path
 import tempfile
@@ -222,8 +223,16 @@ def delete_zip_file(zip_file_path: str):
     path = Path(zip_file_path)
     if not path.exists():
         return
-    pathlib.Path(zip_file_path).unlink()
-    logger.info(f"Finish deleting zip file: {zip_file_path}")
+    for attempt in range(3):
+        try:
+            pathlib.Path(zip_file_path).unlink()
+            logger.info(f"Finish deleting zip file: {zip_file_path}")
+            return
+        except (PermissionError, OSError) as e:
+            if attempt < 2:
+                sleep(1)
+                continue
+            logger.warning(f"Failed to delete zip file: {zip_file_path}. Error: {e}")
 
 
 def list_file_stats(zip_file_path: str):
