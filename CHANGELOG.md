@@ -4,6 +4,21 @@ All notable changes to CxCliPy will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.8] - 2026-08-14
+
+### Fixed
+- Fix CxOneCli compatibility with CheckmarxPythonSDK 1.8.9:
+  - Replace deleted `ScanConfig.to_dict()` with dataclass repr in log
+  - Use camelCase kwargs for `ProjectInput`, `Upload`, `ScanParameter` DTOs
+  - Read summary counters via attribute access instead of dict-style `.get()`
+- Fix group creation crash: import `GroupRepresentation` from `KeycloakAPI.dto` to match
+  `GroupsApi.post_groups`/`post_children` expectations
+- Make `delete_zip_file` tolerate transient file locks on Windows (SDK keeps the zip file
+  handle open after upload)
+
+### Changed
+- Document `group/project` format requirement for `--project_name` in README
+
 ## [0.7.4] - 2026-07-09
 
 ### Fixed
