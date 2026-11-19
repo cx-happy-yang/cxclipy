@@ -2,7 +2,18 @@
 
 All notable changes to CxCliPy will be documented in this file.
 
-## [Unreleased]
+## [0.7.9] - 2026-11-19
+
+### Added
+- Add `--cxsast_timeout` CLI option for the Checkmarx Python SDK HTTP request timeout (default: 300 seconds)
+- Add `src/supported_file_extensions.py` shared module with the CxSAST-supported extensions and the CxOne-only additions
+
+### Changed
+- Align `get_cx_supported_file_extensions` with the official CxSAST supported languages and frameworks table:
+  - Add missing extensions (`.dart`, `.dspf`, `.env`, `.ini`, `.jspdsbld`, `.lua`, `.mod`, `.ph`, `.rs`, `.toml`, `.yaml`, `.yml`)
+  - Remove entries not in the table, including the `.should_neve_match_anything_9gdfg4` placeholder and the broken `.-meta.xml`
+  - `src/zip/zip_file.py` keeps the CxOne-only extras on top of the shared base list
+- Update CheckmarxPythonSDK from 1.8.9 to 1.9.3 (CxCliPy tested against 1.9.3)
 
 ## [0.7.8] - 2026-08-14
 
