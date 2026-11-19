@@ -18,7 +18,8 @@ source ~/.secrets
 --exclude_files "*min.js" \
 --report_xml cx-report-without-branch.xml \
 --filter_severity "Critical,High,Medium" \
---full_scan_cycle 10
+--full_scan_cycle 10 \
+--cxsast_timeout 300
 
 # Test flow with --branch_project (upload ZIP to branched project)
 ./CxCliPy scan \
@@ -36,4 +37,5 @@ source ~/.secrets
 --report_xml cx-report-with-branch.xml \
 --filter_severity "Critical,High,Medium" \
 --full_scan_cycle 10 \
+--cxsast_timeout 300 \
 --branch_project my-branched-project
