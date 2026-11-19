@@ -20,6 +20,7 @@ import logging
 import json
 
 from __version__ import __version__
+from src.supported_file_extensions import CXSAST_SUPPORTED_FILE_EXTENSIONS
 
 # create logger
 logger = logging.getLogger(__name__)
@@ -32,21 +33,13 @@ logger.addHandler(ch)
 
 
 def get_cx_supported_file_extensions():
-    return [
-        '.apex', '.apexp', '.asax', '.ascx', '.asp', '.aspx', '.bas', '.bdy', '.c', '.c++', '.cc', '.cgi', '.cls',
-        '.component', '.conf', '.config', '.cpp', '.cs', '.cshtml', '.csproj', '.ctl', '.ctp', '.cxx', '.dsr', '.ec',
-        '.erb', '.fnc', '.frm', '.go', '.gradle', '.groovy', '.gsh', '.gsp', '.gtl', '.gvy', '.gy', '.h', '.h++',
-        '.handlebars', '.hbs', '.hh', '.hpp', '.htm', '.html', '.hxx', '.inc', '.jade', '.java', '.javasln', '.js',
-        '.jsf', '.json', '.jsp', '.jspf', '.lock', '.m', '.master', '.-meta.xml', '.mf', '.object', '.page', '.pc',
-        '.pck', '.php', '.php3', '.php4', '.php5', '.phtm', '.phtml', '.pkb', '.pkh', '.pks', '.pl', '.plist', '.pls',
-        '.plx', '.pm', '.prc', '.project', '.properties', '.psgi', '.py', '.rb', '.report', '.rhtml', '.rjs', '.rxml',
-        '.scala', '.should_neve_match_anything_9gdfg4', '.sln', '.spc', '.sqb', '.sqf', '.sqh', '.sql', '.sqp', '.sqt',
-        '.sqtb', '.sqth', '.sqv', '.swift', '.tag', '.tgr', '.tld', '.tpb', '.tpl', '.tps', '.trg', '.trigger', '.ts',
-        '.tsx', '.twig', '.vb', '.vbp', '.vbs', '.wod', '.workflow', '.xaml', '.xhtml', '.xib', '.xml', '.xsaccess',
-        '.xsapp', '.xsjs', '.xsjslib', '-meta.xml', '.rpgle', '.pug', '.vue', '.mustache', '.cbl', '.jsx', '.apxc',
-        '.cpy', '.kt', '.rpg38', '.pro', '.csv', '.ftl', '.evt', '.sqlrpg', '.eco', '.cmp', '.txt', '.pco', '.ac',
-        '.cob', '.rpg', '.cmake', '.sqlrpgle', '.tex', '.vm', '.kts', '.latex', '.am', '.app'
-    ]
+    """
+    All file extensions of the languages and frameworks supported by CxSAST.
+
+    Returns:
+        list of str
+    """
+    return CXSAST_SUPPORTED_FILE_EXTENSIONS
 
 
 def get_command_line_arguments():

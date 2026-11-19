@@ -8,6 +8,7 @@ import pathlib
 from zipfile import ZipFile, ZIP_DEFLATED
 from src.log import logger
 from src.commit import get_git_commit_info
+from src.supported_file_extensions import CXSAST_SUPPORTED_FILE_EXTENSIONS, CXONE_ADDITIONAL_FILE_EXTENSIONS
 from typing import List
 
 
@@ -15,21 +16,14 @@ from typing import List
 MAX_CSV_SIZE = 1024 * 1024
 
 def get_cx_supported_file_extensions():
-    return ['.ac', '.am', '.apexp', '.app', '.apxc', '.asax', '.ascx', '.asp', '.aspx', '.bas', '.c', '.c++', '.cbl',
-            '.cc', '.cfg', '.cgi', '.cls', '.cmake', '.cmp', '.cob', '.component', '.conf', '.config',
-            '.configurations', '.cpp', '.cpy', '.cs', '.cshtml', '.csproj', '.csv', '.ctl', '.ctp', '.cxx', '.dart',
-            '.dspf', '.dsr', '.ec', '.eco', '.env', '.env_cxsca-container-build-args', '.erb', '.evt', '.frm', '.ftl',
-            '.go', '.gradle', '.groovy', '.gsh', '.gsp', '.gtl', '.gvy', '.gy', '.h', '.h++', '.handlebars', '.hbs',
-            '.hh', '.hpp', '.htm', '.html', '.hxx', '.inc', '.ini', '.jade', '.java', '.js', '.jsf', '.json', '.jsp',
-            '.jspdsbld', '.jspf', '.jsx', '.kt', '.kts', '.latex', '.lock', '.lua', '.m', '.master', '.mf', '.mod',
-            '.mustache', '.npmrc', '.object', '.page', '.pc', '.pck', '.pco', '.ph', '.php', '.php3', '.php4', '.php5',
-            '.phtm', '.phtml', '.pkb', '.pkh', '.pks', '.pl', '.plist', '.pls', '.plx', '.pm', '.private', '.pro',
-            '.properties', '.psgi', '.pug', '.py', '.rb', '.report', '.resolved', '.rev', '.rhtml', '.rjs', '.rpg',
-            '.rpg38',
-            '.rpgle', '.rs', '.rxml',  '.sbt', '.scala', '.snapshot', '.sqb', '.sql', '.sqlrpg', '.sqlrpgle', '.sum',
-            '.swift', '.tag', '.target', '.testtarget', '.tex', '.tgr', '.tld', '.toml', '.tpl', '.trigger', '.ts',
-            '.tsx', '.twig', '.txt', '.vb', '.vbp', '.vbproj', '.vbs', '.vm', '.vue', '.wod', '.workflow', '.xaml',
-            '.xhtml', '.xib', '.xml', '.xsaccess', '.xsapp', '.xsjs', '.xsjslib', '.yaml', '.yarnrc', '.yml']
+    """
+    All file extensions of the languages and frameworks supported by CxSAST,
+    plus the additional extensions used by CxOne.
+
+    Returns:
+        list of str
+    """
+    return CXSAST_SUPPORTED_FILE_EXTENSIONS + CXONE_ADDITIONAL_FILE_EXTENSIONS
 
 
 def get_cx_supported_file_without_extensions():
