@@ -74,6 +74,8 @@ def get_command_line_arguments():
     parser.add_argument('-branch_project', '--branch_project', default=None,
                         help="Branched project name. If specified, scan will be created under this branched project. "
                              "If the branched project does not exist, it will be created.")
+    parser.add_argument('-cxsast_timeout', '--cxsast_timeout', type=int, default=60,
+                        help="HTTP request timeout in seconds for the Checkmarx Python SDK (default: 60)")
     return parser.parse_known_args()
 
 
@@ -509,6 +511,7 @@ def run_scan_and_generate_reports(arguments):
     full_scan_cycle = int(arguments.full_scan_cycle)
     branch_project = arguments.branch_project
     filter_severity = arguments.filter_severity
+    cxsast_timeout = arguments.cxsast_timeout
     logger.info(
         f"preset: {preset}\n"
         f"incremental: {incremental}\n"
@@ -520,6 +523,7 @@ def run_scan_and_generate_reports(arguments):
         f"report_pdf: {report_pdf}\n"
         f"report_csv: {report_csv}\n"
         f"full_scan_cycle: {full_scan_cycle}\n"
+        f"cxsast_timeout: {cxsast_timeout}\n"
         f"filter_severity: {filter_severity}\n"
     )
 
