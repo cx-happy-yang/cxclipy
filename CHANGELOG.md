@@ -5,7 +5,7 @@ All notable changes to CxCliPy will be documented in this file.
 ## [0.8.0] - 2026-11-20
 
 ### Changed
-- Pin CheckmarxPythonSDK to git commit `5aa68a9` (`fix/portal-soap-suds-client-config`) so `--cxsast_timeout` also applies to Portal SOAP API calls — the suds transport previously ignored the configured timeout, and the PyPI 1.9.3 release does not contain the fix yet
+- Pin CheckmarxPythonSDK to git commit `bae56e1` (`fix/portal-soap-suds-client-config`) so `--cxsast_timeout` also applies to Portal SOAP API calls — the timeout is set on the httpx session, making it the default for every request including SOAP; the PyPI 1.9.3 release does not contain the fix yet
 - Update `run_cxsast.sh`: base URL `https://192.168.3.3`, add `--cxsast_timeout 300` to both test flows
 
 ## [0.7.9] - 2026-11-19
