@@ -1,2 +1,2 @@
-CheckmarxPythonSDK==1.9.3
+CheckmarxPythonSDK @ git+https://github.com/cx-happy-yang/checkmarx-python-sdk.git@5aa68a9
 GitPython==3.1.45
