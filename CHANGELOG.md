@@ -2,6 +2,12 @@
 
 All notable changes to CxCliPy will be documented in this file.
 
+## [0.8.2] - 2026-11-27
+
+### Fixed
+- Stop sending the `scan.config.sca.LastSastScanTime` project parameter, which the tenant now rejects with a 400 "unknown setting" error and made every `CxOneCli` run fail in `process_project`; `--sca_last_sast_scan_time` is still used for the SAST-in-last-N-days check and scan tags
+- Fix `IndexError` in `check_sast_scan_type` on the first scan of a project with `--incremental true`; with no previous scans the scan is now a full scan
+
 ## [0.8.1] - 2026-11-27
 
 ### Changed

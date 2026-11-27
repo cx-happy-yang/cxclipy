@@ -194,6 +194,9 @@ def check_sast_scan_type(
     INCREMENTAL_SCAN = "incremental"
     if not sast_incremental:
         return FULL_SCAN
+    if not scan_collection.scans:
+        logger.info("no previous scans, current scan will be a full scan")
+        return FULL_SCAN
     logger.info(f"full_scan_cycle: {full_scan_cycle}")
     all_scan_ids = [scan.id for scan in scan_collection.scans]
     last_scan_id = all_scan_ids[0]

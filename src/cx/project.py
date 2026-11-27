@@ -58,16 +58,6 @@ def process_project(
             valueTypeParams=None,
             allowOverride=True
         ),
-        ScanParameter(
-            key="scan.config.sca.LastSastScanTime",
-            name="lastSastScanTime",
-            category="sca",
-            originLevel="Project",
-            value=f"{sca_last_sast_scan_time}",
-            valueType="Number",
-            valueTypeParams=None,
-            allowOverride=True
-        ),
     ]
     define_parameters_in_the_input_list_for_a_specific_project(
         project_id=project_id,
